@@ -1,0 +1,33 @@
+.root {
+    display: flex;
+    align-items: center;
+    padding-left: 2rem;
+    padding-right: 2rem;
+
+    background-color: var(--card-bg-color);
+}
+
+.sidebarExtension {
+    display: flex;
+    align-self: stretch;
+    align-items: center;
+    border-right: 1px solid var(--lines-color);
+    padding-right: 2rem;
+}
+
+.heading {
+    font-size: var(--heading-xl-font-size);
+}
+
+.content {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+    padding-left: 1.5rem;
+
+    color: var(--body-text-color);
+}
+
+.actions {
+    margin-left: auto;
+}
