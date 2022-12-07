@@ -1,6 +1,6 @@
 import type { Component } from 'solid-js';
-import { Logo } from './Logo';
 
+import { Logo } from './Logo';
 import styles from './Header.module.css';
 import { Button } from './common/Button';
 
@@ -12,7 +12,7 @@ export const Header: Component = () => {
             </div>
 
             <div class={styles.content}>
-                <h1 class={styles.heading}>
+                <h1 class={'heading-xl'}>
                     Platform Launch
                 </h1>
 

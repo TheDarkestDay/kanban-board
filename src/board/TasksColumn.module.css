@@ -1,0 +1,8 @@
+.root {
+
+}
+
+.title {
+    color: var(--subtitle-color);
+    text-transform: uppercase;
+}

@@ -1,0 +1,11 @@
+.heading-s {
+    font-size: 12px;
+    line-height: 15px;
+    font-weight: bold;
+}
+
+.heading-xl {
+    font-size: 24px;
+    line-height: 30px;
+    font-weight: bold;
+}
