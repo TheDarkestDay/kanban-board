@@ -13,15 +13,19 @@ type Props = {
 };
 
 export const TasksColumn: Component<Props> = ({column}: Props) => {
-    const { name, tasks } = column;
+    const { name, tasks, badgeColor } = column;
+
+    const badgeColorStyle = {
+        '--badge-color': badgeColor
+    };
 
     return (
         <div class={styles.root}>
-            <h2 class={cx(styles.title, 'heading-s')}>
-                {name}
+            <h2 class={cx(styles.title, 'heading-s color-subtitle')} style={badgeColorStyle}>
+                {name} ({tasks.length})
             </h2>
 
-            <ul>
+            <ul class={styles.tasksList}>
                 {
                     tasks.map((task) => <TaskCard task={task} />)
                 }                

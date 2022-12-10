@@ -2,10 +2,31 @@
     font-size: 12px;
     line-height: 15px;
     font-weight: bold;
+    letter-spacing: 2.4px;
 }
 
 .heading-xl {
     font-size: 24px;
     line-height: 30px;
     font-weight: bold;
+}
+
+.heading-m {
+    font-size: 15px;
+    line-height: 19px;
+    font-weight: bold;
+}
+
+.body-m {
+    font-size: 12px;
+    font-weight: bold;
+    line-height: 15px;
+}
+
+.color-body {
+    color: var(--body-text-color);
+}
+
+.color-subtitle {
+    color: var(--subtitle-color);
 }
