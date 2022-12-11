@@ -6,13 +6,9 @@ import styles from './TaskCard.module.css';
 
 const cx = classNames.bind(styles);
 
-type Props = {
-    task: Task
-};
+type Props = Task;
 
-export const TaskCard: Component<Props> = ({task}: Props) => {
-    const { title, subtasks } = task;
-
+export const TaskCard: Component<Props> = ({title, subtasks}: Props) => {
     return (
         <article class={styles.root}>
             <h3 class={cx(styles.title, "heading-m color-body")}>

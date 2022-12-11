@@ -23,6 +23,12 @@ export const Board: Component = () => {
                     subtasks: []
                 },
                 {
+                    title: 'Setup CI pipeline',
+                    id: '9',
+                    description: '',
+                    subtasks: []
+                },
+                {
                     title: 'Add light theme',
                     id: '3',
                     description: '',

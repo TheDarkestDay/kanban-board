@@ -5,6 +5,7 @@ import { Column } from "./domain";
 import { TaskCard } from "./TaskCard";
 
 import styles from './TasksColumn.module.css';
+import { DraggableList } from "../drag-and-drop/DraggableList";
 
 const cx = classNames.bind(styles);
 
@@ -12,7 +13,7 @@ type Props = {
     column: Column
 };
 
-export const TasksColumn: Component<Props> = ({column}: Props) => {
+export const TasksColumn: Component<Props> = ({ column }: Props) => {
     const { name, tasks, badgeColor } = column;
 
     const badgeColorStyle = {
@@ -25,11 +26,7 @@ export const TasksColumn: Component<Props> = ({column}: Props) => {
                 {name} ({tasks.length})
             </h2>
 
-            <ul class={styles.tasksList}>
-                {
-                    tasks.map((task) => <TaskCard task={task} />)
-                }                
-            </ul>
+            <DraggableList class={styles.tasksList} items={tasks} ItemComponent={TaskCard} />
         </div>
     );
 };
