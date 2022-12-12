@@ -9,4 +9,15 @@ export default defineConfig({
   build: {
     target: 'esnext',
   },
+  test: {
+    environment: 'jsdom',
+    transformMode: {
+      web: [/.[jt]sx?/],
+    },
+    threads: false,
+    isolate: false,
+  },
+  resolve: {
+    conditions: ['development', 'browser']
+  }
 });

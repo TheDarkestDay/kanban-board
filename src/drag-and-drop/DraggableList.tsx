@@ -8,6 +8,20 @@ type Props = {
     ItemComponent: Component<any>;
 };
 
+export const dragItemTo = (items: any[], from: number, to: number, position: 'before' | 'after') => {
+    const indexDelta = to - from;
+    const result = items.slice();
+
+    const [elementToMove] = result.splice(from, 1);
+
+    const insertionIndex = indexDelta > 0 ? to - 1 : to;
+    const positionAwareIndex = position === 'before' ? insertionIndex : insertionIndex + 1;
+
+    result.splice(positionAwareIndex, 0, elementToMove);
+
+    return result;
+};
+
 export const DraggableList: Component<Props> = ({ class: className, items, ItemComponent }) => {
     const [sorteditems, setSortedItems] = createSignal(items);
     const [moveTo, setMoveTo] = createSignal(0);
@@ -15,28 +29,9 @@ export const DraggableList: Component<Props> = ({ class: className, items, ItemC
 
     const handleDrop = () => {
         const currentItems = sorteditems();
-        let newItems: any[] = [];
+        const itemsAfterDrag = dragItemTo(currentItems, draggedItemIndex(), moveTo(), 'before');
 
-        const indexFrom = draggedItemIndex();
-        const indexTo = moveTo();
-
-        const indexDelta = indexTo - indexFrom;
-
-        if (indexDelta < 0) {
-            const head = currentItems.slice(0, indexTo);
-            const tail = currentItems.slice(indexTo + 1, indexFrom);
-            const intactTail = currentItems.slice(indexFrom + 1);
-
-            newItems = [...head, currentItems[indexFrom], ...tail, ...intactTail];
-        } else {
-            const head = currentItems.slice(0, indexFrom);
-            const middle = currentItems.slice(indexFrom + 1, indexTo);
-            const tail = currentItems.slice(indexTo + 1);
-
-            newItems = [...head, ...middle, currentItems[indexFrom], ...tail];
-        }
-        
-        setSortedItems(newItems);
+        setSortedItems(itemsAfterDrag);
     };
 
     return (
