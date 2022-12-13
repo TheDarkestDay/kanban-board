@@ -3,13 +3,18 @@ import { Component, JSXElement, onMount, onCleanup } from "solid-js";
 type Props = {
     children: JSXElement;
     onDragStart: () => void;
+    onDragEnd: () => void;
 };
 
-export const Draggable: Component<Props> = ({children, onDragStart}) => {
+export const Draggable: Component<Props> = ({children, onDragStart, onDragEnd}) => {
     let rootElement: HTMLDivElement | undefined;
 
     const handleDragStart = (event: DragEvent) => {
         onDragStart();
+    };
+
+    const handleDragEnd = () => {
+        onDragEnd();
     };
 
     onMount(() => {
@@ -18,6 +23,7 @@ export const Draggable: Component<Props> = ({children, onDragStart}) => {
         }
 
         rootElement.addEventListener('dragstart', handleDragStart);
+        rootElement.addEventListener('dragend', handleDragEnd);
     });
 
     onCleanup(() => {
@@ -26,6 +32,7 @@ export const Draggable: Component<Props> = ({children, onDragStart}) => {
         }
 
         rootElement.removeEventListener('dragstart', handleDragStart);
+        rootElement.removeEventListener('dragend', handleDragEnd);
     });
 
     return (

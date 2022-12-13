@@ -1,8 +1,9 @@
 import { Component, JSXElement, onMount, onCleanup } from "solid-js";
+import { DropPosition } from "./types";
 
 type Props = {
     class?: string;
-    onDragOver: () => void;
+    onDragOver: (position: DropPosition) => void;
     onDrop: () => void;
     children: JSXElement;
 };
@@ -12,7 +13,24 @@ export const DropTarget: Component<Props> = ({children, class: className, onDrop
 
     const handleDragOver = (event: DragEvent) => {
         event.preventDefault();
-        onDragOver();
+
+        if (rootElement == null) {
+            return;
+        }
+
+        const { width, height, top, left } = rootElement.getBoundingClientRect();
+
+        const medianX = left + width / 2;
+        const medianY = top + height / 2;
+
+        const pointerX = event.clientX;
+        const pointerY = event.clientY;
+
+        if (pointerX > medianX || pointerY > medianY) {
+            onDragOver('after');
+        } else {
+            onDragOver('before');
+        }
     };
 
     const handleDragEnter = (event: DragEvent) => {
