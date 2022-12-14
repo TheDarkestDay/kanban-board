@@ -1,4 +1,4 @@
-import { Component, createSignal, Show } from "solid-js";
+import { Component, createSignal, For, Show } from "solid-js";
 import { Draggable } from "./Draggable";
 import { DropTarget } from "./DropTarget";
 import { DropPosition } from "./types";
@@ -75,24 +75,21 @@ export const DraggableList: Component<Props> = ({ class: className, items, ItemC
     };
 
     return (
-        <ul class={className}>{
-            [
-                <Show when={moveToPosition() === 'before' && moveToIndex() === 0}>
-                    <div style={{ ...dropZoneStyle(), 'background-color': 'red' }}></div>
-                </Show>,
-                ...sorteditems().map((item, index) =>
-                    <>
-                        <DropTarget onDragOver={(position) => handleDragOver(index, position)} onDrop={handleDrop}>
-                            <Draggable onDragStart={() => handleDragStart(index)} onDragEnd={handleDragEnd}>
-                                <ItemComponent ref={itemElement} {...item} />
-                            </Draggable>
-                        </DropTarget>
-                        <Show when={moveToPosition() === 'after' && moveToIndex() === index}>
+        <ul class={className}>
+            <For each={sorteditems()}>
+                {(item, index) =>
+                    <DropTarget onDragOver={(position) => handleDragOver(index(), position)} onDrop={handleDrop}>
+                        <Show when={moveToPosition() === 'before' && moveToIndex() === index()}>
                             <div style={{ ...dropZoneStyle(), 'background-color': 'red' }}></div>
                         </Show>
-                    </>
-                )
-            ]
-        }</ul>
+                        <Draggable onDragStart={() => handleDragStart(index())} onDragEnd={handleDragEnd}>
+                            <ItemComponent ref={itemElement} {...item} />
+                        </Draggable>
+                        <Show when={moveToPosition() === 'after' && moveToIndex() === index()}>
+                            <div style={{ ...dropZoneStyle(), 'background-color': 'red' }}></div>
+                        </Show>
+                    </DropTarget>}
+            </For>
+        </ul>
     );
 };
