@@ -1,4 +1,5 @@
 import { Component, createSignal, For } from 'solid-js';
+import { MultiDraggableListStoreContext, MultiDraggableListStoreProvider } from '../drag-and-drop/MultiDraggableListStoreProvider';
 
 import styles from './Board.module.css';
 import { Column } from './domain';
@@ -68,12 +69,15 @@ export const Board: Component = () => {
         }
     ]);
 
+    const tasks = columns().map((column) => column.tasks);
 
     return (
         <main class={styles.main}>
-            <For each={columns()}>
-                {(column) => <TasksColumn column={column} />}
-            </For>
+            <MultiDraggableListStoreProvider data={tasks}>
+                <For each={columns()}>
+                    {(column, index) => <TasksColumn index={index()} column={column} />}
+                </For>
+            </MultiDraggableListStoreProvider>
         </main>
     );
 };

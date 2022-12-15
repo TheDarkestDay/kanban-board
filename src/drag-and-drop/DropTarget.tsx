@@ -1,14 +1,16 @@
-import { Component, JSXElement, onMount, onCleanup } from "solid-js";
-import { DropPosition } from "./types";
+import { Component, JSXElement } from "solid-js";
+import { DropPosition, ListDirection } from "./types";
 
 type Props = {
     class?: string;
+    direction: ListDirection;
     onDragOver: (position: DropPosition) => void;
     onDrop: () => void;
+    onDragLeave?: () => void;
     children: JSXElement;
 };
 
-export const DropTarget: Component<Props> = ({children, class: className, onDrop, onDragOver}) => {
+export const DropTarget: Component<Props> = ({children, class: className, onDrop, onDragOver, onDragLeave, direction}) => {
     let rootElement: HTMLDivElement | undefined;
 
     const handleDragOver = (event: DragEvent) => {
@@ -26,7 +28,9 @@ export const DropTarget: Component<Props> = ({children, class: className, onDrop
         const pointerX = event.clientX;
         const pointerY = event.clientY;
 
-        if (pointerX > medianX || pointerY > medianY) {
+        const isBeyondMedian = direction === 'inline' ? pointerX > medianX : pointerY > medianY;
+
+        if (isBeyondMedian) {
             onDragOver('after');
         } else {
             onDragOver('before');
@@ -41,28 +45,14 @@ export const DropTarget: Component<Props> = ({children, class: className, onDrop
         onDrop();
     };
 
-    onMount(() => {
-        if (rootElement == null) {
-            return;
+    const handleDragLeave = () => {
+        if (onDragLeave) {
+            onDragLeave();
         }
-
-        rootElement.addEventListener('dragenter', handleDragEnter);
-        rootElement.addEventListener('dragover', handleDragOver);
-        rootElement.addEventListener('drop', handleDrop);
-    });
-
-    onCleanup(() => {
-        if (rootElement == null) {
-            return;
-        }
-
-        rootElement.removeEventListener('dragenter', handleDragEnter);
-        rootElement.removeEventListener('dragover', handleDragOver);
-        rootElement.removeEventListener('drop', handleDrop);
-    });
+    };
 
     return (
-        <div class={className} ref={rootElement}>
+        <div class={className} ref={rootElement} onDragEnter={handleDragEnter} onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave}>
             {children}
         </div>
     );

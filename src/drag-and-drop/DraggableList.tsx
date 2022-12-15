@@ -1,10 +1,11 @@
 import { Component, createSignal, For, Show } from "solid-js";
 import { Draggable } from "./Draggable";
 import { DropTarget } from "./DropTarget";
-import { DropPosition } from "./types";
+import { DropPosition, ListDirection } from "./types";
 
 type Props = {
     class?: string;
+    direction: ListDirection;
     items: any[];
     ItemComponent: Component<any>;
 };
@@ -23,12 +24,7 @@ export const dragItemTo = (items: any[], from: number, to: number, position: Dro
     return result;
 };
 
-type DropTo = {
-    index: number;
-    position: DropPosition;
-};
-
-export const DraggableList: Component<Props> = ({ class: className, items, ItemComponent }) => {
+export const DraggableList: Component<Props> = ({ class: className, items, ItemComponent, direction }) => {
     let itemElement: HTMLDivElement | undefined;
 
     const [sorteditems, setSortedItems] = createSignal(items);
@@ -62,12 +58,15 @@ export const DraggableList: Component<Props> = ({ class: className, items, ItemC
         setMoveToIndex(-1);
     };
 
+    const handleDragLeave = () => {
+        setMoveToIndex(-1);
+    }
+
     const handleDrop = () => {
         const currentItems = sorteditems();
         const fromIndex = draggedItemIndex();
         const toIndex = moveToIndex();
         const position = moveToPosition();
-        console.log(`Dragging element ${fromIndex} to ${position} ${toIndex} `);
         const itemsAfterDrag = dragItemTo(currentItems, fromIndex, toIndex, position);
 
         setSortedItems(itemsAfterDrag);
@@ -78,7 +77,7 @@ export const DraggableList: Component<Props> = ({ class: className, items, ItemC
         <ul class={className}>
             <For each={sorteditems()}>
                 {(item, index) =>
-                    <DropTarget onDragOver={(position) => handleDragOver(index(), position)} onDrop={handleDrop}>
+                    <DropTarget direction={direction} onDragOver={(position) => handleDragOver(index(), position)} onDrop={handleDrop}>
                         <Show when={moveToPosition() === 'before' && moveToIndex() === index()}>
                             <div style={{ ...dropZoneStyle(), 'background-color': 'red' }}></div>
                         </Show>
