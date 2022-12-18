@@ -6,48 +6,46 @@ type Props = {
     data: any[][];
 };
 
-const initialContextValue: ContextValue = {
-    itemsLists: [],
+const initialContextValue: MultiDraggableListStore = {
+    store: {
+        itemsLists: [],
+    },
     setStore: () => {},
 };
 
-type ContextValue = {
-    itemsLists: any[][];
-    setStore: SetStoreFunction<MultiDraggableListStore>;
-};
-
-export const MultiDraggableListStoreContext = createContext<ContextValue>(initialContextValue);
-
 type MultiDraggableListStore = {
+    store: MultiDraggableListState;
+    setStore: SetStoreFunction<MultiDraggableListState>;
+};
+
+export const MultiDraggableListStoreContext = createContext<MultiDraggableListStore>(initialContextValue);
+
+type MultiDraggableListState = {
     itemsLists: any[][];
 };
 
-export const MultiDraggableListStoreProvider: Component<Props> = ({children, data}: Props) => {
-    const [store, setStore] = createStore<MultiDraggableListStore>({
-        itemsLists: data,
-    });
-
-    onMount(() => {
-        setStore({itemsLists: data});
+export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) => {
+    const [store, setStore] = createStore<MultiDraggableListState>({
+        itemsLists: props.data,
     });
 
     const contextValue = {
-        itemsLists: store.itemsLists,
+        store,
         setStore,
     };
 
     return (
         <MultiDraggableListStoreContext.Provider value={contextValue}>
-            {children}
+            {props.children}
         </MultiDraggableListStoreContext.Provider>
     );
 };
 
 export const useMultiDraggableListStore = (listIndex: number) => {
-    const { itemsLists, setStore } = useContext(MultiDraggableListStoreContext);
+    const { store, setStore } = useContext(MultiDraggableListStoreContext);
 
     return {
-        items: itemsLists[listIndex] ?? [],
+        store,
         setStore,
     };
 };

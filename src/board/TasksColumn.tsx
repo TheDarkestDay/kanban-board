@@ -16,10 +16,11 @@ type Props = {
 };
 
 export const TasksColumn: Component<Props> = ({ column, index }: Props) => {
-    const { items: tasks, setStore } = useMultiDraggableListStore(index);
-    console.log(`Items in column`, tasks);
+    const { store } = useMultiDraggableListStore(index);
 
     const { name, badgeColor } = column;
+
+    const tasks = store.itemsLists[index] ?? [];
 
     const badgeColorStyle = {
         '--badge-color': badgeColor
