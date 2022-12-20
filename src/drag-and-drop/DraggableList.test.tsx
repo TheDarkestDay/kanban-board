@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { dragItemTo } from './DraggableList';
+import { dragItemByIndex } from './MultiDraggableListStoreProvider';
 
-describe('dragItemTo', () => {
+describe('dragItemByIndex', () => {
     describe('placing before', () => {
         it('should drag element from lower index to greater', () => {
             const items = ['John', 'Bob', 'Alice'];
     
-            const newItems = dragItemTo(items, 0, 1, 'before');
+            const newItems = dragItemByIndex(items, 0, 1, 'before');
     
             expect(newItems).toEqual(['John', 'Bob', 'Alice']);
         });
@@ -15,7 +15,7 @@ describe('dragItemTo', () => {
         it('should drag element from greater index to lower', () => {
             const items = ['John', 'Bob', 'Alice'];
     
-            const newItems = dragItemTo(items, 2, 1, 'before');
+            const newItems = dragItemByIndex(items, 2, 1, 'before');
     
             expect(newItems).toEqual(['John', 'Alice', 'Bob']);
         });
@@ -23,7 +23,7 @@ describe('dragItemTo', () => {
         it('should drag element to the beginning of a list', () => {
             const items = ['John', 'Bob', 'Alice'];
     
-            const newItems = dragItemTo(items, 2, 0, 'before');
+            const newItems = dragItemByIndex(items, 2, 0, 'before');
     
             expect(newItems).toEqual(['Alice', 'John', 'Bob']);
         });
@@ -33,7 +33,7 @@ describe('dragItemTo', () => {
         it('should drag element from lower index to greater', () => {
             const items = ['John', 'Bob', 'Alice'];
     
-            const newItems = dragItemTo(items, 0, 1, 'after');
+            const newItems = dragItemByIndex(items, 0, 1, 'after');
     
             expect(newItems).toEqual(['Bob', 'John', 'Alice']);
         });
@@ -41,7 +41,7 @@ describe('dragItemTo', () => {
         it('should drag element from greater index to lower', () => {
             const items = ['John', 'Bob', 'Alice'];
     
-            const newItems = dragItemTo(items, 2, 1, 'after');
+            const newItems = dragItemByIndex(items, 2, 1, 'after');
     
             expect(newItems).toEqual(['John', 'Bob', 'Alice']);
         });
@@ -49,7 +49,7 @@ describe('dragItemTo', () => {
         it('should drag element to the end of a list', () => {
             const items = ['John', 'Bob', 'Alice'];
     
-            const newItems = dragItemTo(items, 0, 2, 'after');
+            const newItems = dragItemByIndex(items, 0, 2, 'after');
     
             expect(newItems).toEqual(['Bob', 'Alice', 'John']);
         });

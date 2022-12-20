@@ -1,33 +1,21 @@
 import { Component, createSignal, For, Show } from "solid-js";
 import { Draggable } from "./Draggable";
 import { DropTarget } from "./DropTarget";
+import { useMultiDraggableListStore } from "./MultiDraggableListStoreProvider";
 import { DropPosition, ListDirection } from "./types";
 
 type Props = {
     class?: string;
+    index?: number;
     direction: ListDirection;
     items: any[];
     ItemComponent: Component<any>;
 };
 
-export const dragItemTo = (items: any[], from: number, to: number, position: DropPosition) => {
-    const indexDelta = to - from;
-    const result = items.slice();
-
-    const [elementToMove] = result.splice(from, 1);
-
-    const insertionIndex = indexDelta > 0 ? to - 1 : to;
-    const positionAwareIndex = position === 'before' ? insertionIndex : insertionIndex + 1;
-
-    result.splice(positionAwareIndex, 0, elementToMove);
-
-    return result;
-};
-
-export const DraggableList: Component<Props> = ({ class: className, items, ItemComponent, direction }) => {
+export const DraggableList: Component<Props> = ({ class: className, items, ItemComponent, direction, index }) => {
     let itemElement: HTMLDivElement | undefined;
 
-    const [sorteditems, setSortedItems] = createSignal(items);
+    const { setDragFromListIndex, setDragToListIndex, performDrag } = useMultiDraggableListStore();
     const [moveToIndex, setMoveToIndex] = createSignal(-1);
     const [moveToPosition, setMoveToPosition] = createSignal<DropPosition>('before');
     const [draggedItemIndex, setDraggedItemIndex] = createSignal(-1);
@@ -36,8 +24,12 @@ export const DraggableList: Component<Props> = ({ class: className, items, ItemC
         height: 'auto',
     });
 
-    const handleDragStart = (index: number) => {
-        setDraggedItemIndex(index);
+    const handleDragStart = (itemIndex: number) => {
+        setDraggedItemIndex(itemIndex);
+
+        if (index != null) {
+            setDragFromListIndex(index);
+        }
 
         if (itemElement == null) {
             return;
@@ -49,9 +41,13 @@ export const DraggableList: Component<Props> = ({ class: className, items, ItemC
         });
     }
 
-    const handleDragOver = (index: number, position: DropPosition) => {
-        setMoveToIndex(index);
+    const handleDragOver = (itemIndex: number, position: DropPosition) => {
+        setMoveToIndex(itemIndex);
         setMoveToPosition(position);
+
+        if (index != null) {
+            setDragToListIndex(index);
+        }
     };
 
     const handleDragEnd = () => {
@@ -63,19 +59,18 @@ export const DraggableList: Component<Props> = ({ class: className, items, ItemC
     }
 
     const handleDrop = () => {
-        const currentItems = sorteditems();
-        const fromIndex = draggedItemIndex();
-        const toIndex = moveToIndex();
+        const from = draggedItemIndex();
+        const to = moveToIndex();
         const position = moveToPosition();
-        const itemsAfterDrag = dragItemTo(currentItems, fromIndex, toIndex, position);
 
-        setSortedItems(itemsAfterDrag);
+        performDrag(from, to, position);
+
         setMoveToIndex(-1);
     };
 
     return (
         <ul class={className}>
-            <For each={sorteditems()}>
+            <For each={items}>
                 {(item, index) =>
                     <DropTarget direction={direction} onDragOver={(position) => handleDragOver(index(), position)} onDrop={handleDrop}>
                         <Show when={moveToPosition() === 'before' && moveToIndex() === index()}>
