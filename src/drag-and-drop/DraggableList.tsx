@@ -6,16 +6,15 @@ import { DropPosition, ListDirection } from "./types";
 
 type Props = {
     class?: string;
-    index?: number;
+    index: number;
     direction: ListDirection;
-    items: any[];
     ItemComponent: Component<any>;
 };
 
-export const DraggableList: Component<Props> = ({ class: className, items, ItemComponent, direction, index }) => {
+export const DraggableList: Component<Props> = ({ class: className, ItemComponent, direction, index }) => {
     let itemElement: HTMLDivElement | undefined;
 
-    const { setDragFromListIndex, setDragToListIndex, performDrag } = useMultiDraggableListStore();
+    const { store, setDragFromListIndex, setDragToListIndex, performDrag } = useMultiDraggableListStore();
     const [moveToIndex, setMoveToIndex] = createSignal(-1);
     const [moveToPosition, setMoveToPosition] = createSignal<DropPosition>('before');
     const [draggedItemIndex, setDraggedItemIndex] = createSignal(-1);
@@ -70,7 +69,7 @@ export const DraggableList: Component<Props> = ({ class: className, items, ItemC
 
     return (
         <ul class={className}>
-            <For each={items}>
+            <For each={store.itemsLists[index]}>
                 {(item, index) =>
                     <DropTarget direction={direction} onDragOver={(position) => handleDragOver(index(), position)} onDrop={handleDrop}>
                         <Show when={moveToPosition() === 'before' && moveToIndex() === index()}>

@@ -32,7 +32,7 @@ export const TasksColumn: Component<Props> = ({ column, index }: Props) => {
                 {name} ({tasks.length})
             </h2>
 
-            <DraggableList index={index} direction="block" class={styles.tasksList} items={tasks} ItemComponent={TaskCard} />
+            <DraggableList index={index} direction="block" class={styles.tasksList} ItemComponent={TaskCard} />
         </div>
     );
 };
