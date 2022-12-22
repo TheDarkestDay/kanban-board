@@ -11,17 +11,20 @@ type MultiDraggableListStore = {
     store: MultiDraggableListState;
     setDragFromListIndex: (index: number) => void,
     setDragToListIndex: (index: number) => void,
-    performDrag: (draggedItemIndex: number, destinationIndex: number, position: DropPosition) => void;
+    setDragFromItemIndex: (index: number) => void,
+    performDrag: (destinationIndex: number, position: DropPosition) => void;
 };
 
 const initialContextValue: MultiDraggableListStore = {
     store: {
         itemsLists: [],
-        dragFromListIndex: -1,
-        dragToListIndex: -1
+        dragFromListIndex: 0,
+        dragToListIndex: 0,
+        dragFromItemIndex: 0
     },
     setDragFromListIndex: () => {},
     setDragToListIndex: () => {},
+    setDragFromItemIndex: () => {},
     performDrag: () => {}
 };
 
@@ -31,6 +34,7 @@ type MultiDraggableListState = {
     itemsLists: any[][];
     dragToListIndex: number;
     dragFromListIndex: number;
+    dragFromItemIndex: number;
 };
 
 const insertItemAt = (itemsCopy: any[], itemToMove: any, to: number, position: DropPosition) => {
@@ -56,8 +60,9 @@ export const dragItemByIndex = (items: any[], from: number, to: number, position
 export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) => {
     const [store, setStore] = createStore<MultiDraggableListState>({
         itemsLists: props.data,
-        dragToListIndex: -1,
-        dragFromListIndex: -1,
+        dragToListIndex: 0,
+        dragFromListIndex: 0,
+        dragFromItemIndex: 0
     });
 
     const contextValue = {
@@ -68,18 +73,20 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
         setDragToListIndex(index: number) {
             setStore({dragToListIndex: index});
         },
-        performDrag(draggedItemIndex: number, destinationIndex: number, position: DropPosition) {
-            const { dragFromListIndex, dragToListIndex } = store;
+        setDragFromItemIndex(index: number) {
+            setStore({dragFromItemIndex: index});
+        },
+        performDrag(destinationIndex: number, position: DropPosition) {
+            const { dragFromListIndex, dragFromItemIndex, dragToListIndex } = store;
 
             setStore(
                 produce((state) => {
-                    console.log(`Moving element ${draggedItemIndex} from list ${dragFromListIndex} to ${destinationIndex} of list ${dragToListIndex}`);
                     if (dragFromListIndex !== dragToListIndex) {
-                        const [itemToMove] = state.itemsLists[dragFromListIndex].splice(draggedItemIndex, 1);
+                        const [itemToMove] = state.itemsLists[dragFromListIndex].splice(dragFromItemIndex, 1);
 
                         insertItemAt(state.itemsLists[dragToListIndex], itemToMove, destinationIndex, position);
                     } else {
-                        state.itemsLists[dragToListIndex] = dragItemByIndex(state.itemsLists[dragToListIndex], draggedItemIndex, destinationIndex, position);
+                        state.itemsLists[dragToListIndex] = dragItemByIndex(state.itemsLists[dragToListIndex], dragFromItemIndex, destinationIndex, position);
                     }
                 })
             );
@@ -94,12 +101,13 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
 };
 
 export const useMultiDraggableListStore = () => {
-    const { store, setDragFromListIndex, setDragToListIndex, performDrag } = useContext(MultiDraggableListStoreContext);
+    const { store, setDragFromListIndex, setDragToListIndex, setDragFromItemIndex, performDrag } = useContext(MultiDraggableListStoreContext);
 
     return {
         store,
         setDragFromListIndex,
         setDragToListIndex,
+        setDragFromItemIndex,
         performDrag
     };
 };

@@ -1,4 +1,4 @@
-import { Component, createSignal, For, Show } from "solid-js";
+import { Component, createMemo, createSignal, For, Show } from "solid-js";
 import { Draggable } from "./Draggable";
 import { DropTarget } from "./DropTarget";
 import { useMultiDraggableListStore } from "./MultiDraggableListStoreProvider";
@@ -14,72 +14,87 @@ type Props = {
 export const DraggableList: Component<Props> = ({ class: className, ItemComponent, direction, index }) => {
     let itemElement: HTMLDivElement | undefined;
 
-    const { store, setDragFromListIndex, setDragToListIndex, performDrag } = useMultiDraggableListStore();
+    const { store, setDragFromListIndex, setDragFromItemIndex, setDragToListIndex, performDrag } = useMultiDraggableListStore();
     const [moveToIndex, setMoveToIndex] = createSignal(-1);
     const [moveToPosition, setMoveToPosition] = createSignal<DropPosition>('before');
-    const [draggedItemIndex, setDraggedItemIndex] = createSignal(-1);
-    const [dropZoneStyle, setDropZoneStyle] = createSignal({
-        width: 'auto',
-        height: 'auto',
+    const [hasExternalDrag, setHasExternalDrag] = createSignal(false);
+    const [isOwnItemBeingDragged, setOwnItemBeingDragged] = createSignal(false);
+    const dropZoneStyle = createMemo(() => {
+        const isDragInsideThisList = hasExternalDrag() || isOwnItemBeingDragged();
+        const hasDragLeft = store.dragToListIndex !== index;
+        if (isDragInsideThisList && !hasDragLeft) {
+            return {
+                width: `${itemElement?.offsetWidth}px`,
+                height: `${itemElement?.offsetHeight}px`,
+                'background-color': 'red'
+            };
+        }
+
+        return {
+            width: 'auto',
+            height: 'auto'
+        }
     });
 
+
     const handleDragStart = (itemIndex: number) => {
-        setDraggedItemIndex(itemIndex);
+        setDragFromItemIndex(itemIndex);
+        setDragFromListIndex(index);
 
-        if (index != null) {
-            setDragFromListIndex(index);
-        }
-
-        if (itemElement == null) {
-            return;
-        }
-
-        setDropZoneStyle({
-            width: `${itemElement.offsetWidth}px`,
-            height: `${itemElement.offsetHeight}px`,
-        });
+        setOwnItemBeingDragged(true);
     }
+
+    const handleDragEnter = () => {
+        const { width } = dropZoneStyle();
+
+        if (width === 'auto') {
+            setHasExternalDrag(true);
+        }
+    };
 
     const handleDragOver = (itemIndex: number, position: DropPosition) => {
         setMoveToIndex(itemIndex);
         setMoveToPosition(position);
 
-        if (index != null) {
-            setDragToListIndex(index);
-        }
+        setDragToListIndex(index);
     };
 
     const handleDragEnd = () => {
         setMoveToIndex(-1);
     };
 
-    const handleDragLeave = () => {
-        setMoveToIndex(-1);
-    }
-
     const handleDrop = () => {
-        const from = draggedItemIndex();
         const to = moveToIndex();
         const position = moveToPosition();
 
-        performDrag(from, to, position);
+        performDrag(to, position);
 
         setMoveToIndex(-1);
+        setOwnItemBeingDragged(false);
+        setHasExternalDrag(false);
+    };
+
+    const isPointerBeforeItemAtIndex = (itemIndex: number) => {
+        return moveToPosition() === 'before' && itemIndex === moveToIndex();
+    };
+
+    const isPointerAfterItemAtIndex = (itemIndex: number) => {
+        return moveToPosition() === 'after' && itemIndex === moveToIndex();
     };
 
     return (
         <ul class={className}>
             <For each={store.itemsLists[index]}>
-                {(item, index) =>
-                    <DropTarget direction={direction} onDragOver={(position) => handleDragOver(index(), position)} onDrop={handleDrop}>
-                        <Show when={moveToPosition() === 'before' && moveToIndex() === index()}>
-                            <div style={{ ...dropZoneStyle(), 'background-color': 'red' }}></div>
+                {(item, itemIndex) =>
+                    <DropTarget direction={direction} onDragEnter={handleDragEnter} onDragOver={(position) => handleDragOver(itemIndex(), position)} onDrop={handleDrop}>
+                        <Show when={isPointerBeforeItemAtIndex(itemIndex())}>
+                            <div style={dropZoneStyle()}></div>
                         </Show>
-                        <Draggable onDragStart={() => handleDragStart(index())} onDragEnd={handleDragEnd}>
+                        <Draggable onDragStart={() => handleDragStart(itemIndex())} onDragEnd={handleDragEnd}>
                             <ItemComponent ref={itemElement} {...item} />
                         </Draggable>
-                        <Show when={moveToPosition() === 'after' && moveToIndex() === index()}>
-                            <div style={{ ...dropZoneStyle(), 'background-color': 'red' }}></div>
+                        <Show when={isPointerAfterItemAtIndex(itemIndex())}>
+                            <div style={dropZoneStyle()}></div>
                         </Show>
                     </DropTarget>}
             </For>

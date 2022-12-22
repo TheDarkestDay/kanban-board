@@ -5,12 +5,13 @@ type Props = {
     class?: string;
     direction: ListDirection;
     onDragOver: (position: DropPosition) => void;
+    onDragEnter: () => void;
     onDrop: () => void;
     onDragLeave?: () => void;
     children: JSXElement;
 };
 
-export const DropTarget: Component<Props> = ({children, class: className, onDrop, onDragOver, onDragLeave, direction}) => {
+export const DropTarget: Component<Props> = ({children, class: className, onDrop, onDragEnter, onDragOver, onDragLeave, direction}) => {
     let rootElement: HTMLDivElement | undefined;
 
     const handleDragOver = (event: DragEvent) => {
@@ -39,6 +40,7 @@ export const DropTarget: Component<Props> = ({children, class: className, onDrop
 
     const handleDragEnter = (event: DragEvent) => {
         event.preventDefault();
+        onDragEnter();
     };
 
     const handleDrop = () => {

@@ -9,7 +9,7 @@ type Props = {
 export const Draggable: Component<Props> = ({children, onDragStart, onDragEnd}) => {
     let rootElement: HTMLDivElement | undefined;
 
-    const handleDragStart = (event: DragEvent) => {
+    const handleDragStart = () => {
         onDragStart();
     };
 
