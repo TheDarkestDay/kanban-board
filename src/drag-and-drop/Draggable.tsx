@@ -2,7 +2,7 @@ import { Component, JSXElement, onMount, onCleanup } from "solid-js";
 
 type Props = {
     children: JSXElement;
-    onDragStart: () => void;
+    onDragStart: (width: number, height: number) => void;
     onDragEnd: () => void;
 };
 
@@ -10,7 +10,14 @@ export const Draggable: Component<Props> = ({children, onDragStart, onDragEnd}) 
     let rootElement: HTMLDivElement | undefined;
 
     const handleDragStart = () => {
-        onDragStart();
+        if (rootElement == null) {
+            return;
+        }
+
+        onDragStart(
+            rootElement.offsetWidth,
+            rootElement.offsetHeight
+        );
     };
 
     const handleDragEnd = () => {

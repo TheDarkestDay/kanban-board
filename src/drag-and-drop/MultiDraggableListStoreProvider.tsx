@@ -12,6 +12,8 @@ type MultiDraggableListStore = {
     setDragFromListIndex: (index: number) => void,
     setDragToListIndex: (index: number) => void,
     setDragFromItemIndex: (index: number) => void,
+    setDraggableElementSizes: (width: number, height: number) => void;
+    setDragInProgress: (value: boolean) => void;
     performDrag: (destinationIndex: number, position: DropPosition) => void;
 };
 
@@ -20,11 +22,16 @@ const initialContextValue: MultiDraggableListStore = {
         itemsLists: [],
         dragFromListIndex: 0,
         dragToListIndex: 0,
-        dragFromItemIndex: 0
+        dragFromItemIndex: 0,
+        draggableElementWidth: null,
+        draggableElementHeight: null,
+        isDragInProgress: false,
     },
     setDragFromListIndex: () => {},
     setDragToListIndex: () => {},
     setDragFromItemIndex: () => {},
+    setDraggableElementSizes: () => {},
+    setDragInProgress: () => {},
     performDrag: () => {}
 };
 
@@ -35,6 +42,9 @@ type MultiDraggableListState = {
     dragToListIndex: number;
     dragFromListIndex: number;
     dragFromItemIndex: number;
+    isDragInProgress: boolean;
+    draggableElementWidth: number | null;
+    draggableElementHeight: number | null;
 };
 
 const insertItemAt = (itemsCopy: any[], itemToMove: any, to: number, position: DropPosition) => {
@@ -62,7 +72,10 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
         itemsLists: props.data,
         dragToListIndex: 0,
         dragFromListIndex: 0,
-        dragFromItemIndex: 0
+        dragFromItemIndex: 0,
+        draggableElementHeight: null,
+        draggableElementWidth: null,
+        isDragInProgress: false,
     });
 
     const contextValue = {
@@ -76,6 +89,12 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
         setDragFromItemIndex(index: number) {
             setStore({dragFromItemIndex: index});
         },
+        setDraggableElementSizes(width: number, height: number) {
+            setStore({draggableElementWidth: width, draggableElementHeight: height});
+        },
+        setDragInProgress(value: boolean) {
+            setStore({isDragInProgress: value});
+        },
         performDrag(destinationIndex: number, position: DropPosition) {
             const { dragFromListIndex, dragFromItemIndex, dragToListIndex } = store;
 
@@ -88,6 +107,8 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
                     } else {
                         state.itemsLists[dragToListIndex] = dragItemByIndex(state.itemsLists[dragToListIndex], dragFromItemIndex, destinationIndex, position);
                     }
+
+                    state.isDragInProgress = false;
                 })
             );
         }
@@ -101,13 +122,15 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
 };
 
 export const useMultiDraggableListStore = () => {
-    const { store, setDragFromListIndex, setDragToListIndex, setDragFromItemIndex, performDrag } = useContext(MultiDraggableListStoreContext);
+    const { store, setDragFromListIndex, setDragInProgress, setDragToListIndex, setDraggableElementSizes, setDragFromItemIndex, performDrag } = useContext(MultiDraggableListStoreContext);
 
     return {
         store,
         setDragFromListIndex,
         setDragToListIndex,
+        setDragInProgress,
         setDragFromItemIndex,
+        setDraggableElementSizes,
         performDrag
     };
 };
