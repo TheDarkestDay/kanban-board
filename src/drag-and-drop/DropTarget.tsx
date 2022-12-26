@@ -1,4 +1,5 @@
-import { Component, JSXElement } from "solid-js";
+import { Component, JSXElement, ValidComponent } from "solid-js";
+import { Dynamic } from "solid-js/web"; 
 import { DropPosition, ListDirection } from "./types";
 
 type Props = {
@@ -8,10 +9,11 @@ type Props = {
     onDragEnter?: () => void;
     onDrop: () => void;
     onDragLeave?: () => void;
+    component?: ValidComponent;
     children?: JSXElement;
 };
 
-export const DropTarget: Component<Props> = ({children, class: className, onDrop, onDragEnter, onDragOver, onDragLeave, direction}) => {
+export const DropTarget: Component<Props> = ({children, component = 'div', class: className, onDrop, onDragEnter, onDragOver, onDragLeave, direction}) => {
     let rootElement: HTMLDivElement | undefined;
 
     const handleDragOver = (event: DragEvent) => {
@@ -56,8 +58,8 @@ export const DropTarget: Component<Props> = ({children, class: className, onDrop
     };
 
     return (
-        <div class={className} ref={rootElement} onDragEnter={handleDragEnter} onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave}>
+        <Dynamic component={component} class={className} ref={rootElement} onDragEnter={handleDragEnter} onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave}>
             {children}
-        </div>
+        </Dynamic>
     );
 };

@@ -81,7 +81,7 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
         <ul class={className}>
             <For each={store.itemsLists[index]}>
                 {(item, itemIndex) =>
-                    <DropTarget direction={direction} onDragOver={(position) => handleDragOver(itemIndex(), position)} onDrop={handleDrop}>
+                    <DropTarget component="li" direction={direction} onDragOver={(position) => handleDragOver(itemIndex(), position)} onDrop={handleDrop}>
                         <Show when={isPointerBeforeItemAtIndex(itemIndex())}>
                             <div style={dropZoneStyle()}></div>
                         </Show>
