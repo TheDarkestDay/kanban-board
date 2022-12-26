@@ -15,21 +15,8 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
     const { store, setDragFromListIndex, setDragInProgress, setDraggableElementSizes, setDragFromItemIndex, setDragToListIndex, performDrag } = useMultiDraggableListStore();
     const [moveToIndex, setMoveToIndex] = createSignal(-1);
     const [moveToPosition, setMoveToPosition] = createSignal<DropPosition>('before');
-    const [isOwnItemBeingDragged, setOwnItemBeingDragged] = createSignal(false);
     const dropZoneStyle = createMemo(() => {
-        const isListEmpty = store.itemsLists[index].length === 0;
-
-        if (isListEmpty && store.isDragInProgress) {
-            return {
-                width: `${store.draggableElementWidth}px`,
-                height: `${store.draggableElementHeight}px`,
-                'background-color': 'red'
-            };
-        }
-
-        const isDragInsideThisList = store.isDragInProgress || isOwnItemBeingDragged();
-        const hasDragLeft = store.dragToListIndex !== index;
-        if (isDragInsideThisList && !hasDragLeft) {
+        if (store.isDragInProgress) {
             return {
                 width: `${store.draggableElementWidth}px`,
                 height: `${store.draggableElementHeight}px`,
@@ -37,6 +24,7 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
             };
         }
     });
+    const isDragInsideThisList = createMemo(() => store.dragToListIndex === index);
 
 
     const handleDragStart = (itemIndex: number, draggableItemWidth: number, draggableItemHeight: number) => {
@@ -44,8 +32,6 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
         setDragFromListIndex(index);
         setDraggableElementSizes(draggableItemWidth, draggableItemHeight);
         setDragInProgress(true);
-
-        setOwnItemBeingDragged(true);
     }
 
     const handleDragOver = (itemIndex: number, position: DropPosition) => {
@@ -66,15 +52,14 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
         performDrag(to, position);
 
         setMoveToIndex(-1);
-        setOwnItemBeingDragged(false);
     };
 
     const isPointerBeforeItemAtIndex = (itemIndex: number) => {
-        return moveToPosition() === 'before' && itemIndex === moveToIndex();
+        return isDragInsideThisList() && moveToPosition() === 'before' && itemIndex === moveToIndex();
     };
 
     const isPointerAfterItemAtIndex = (itemIndex: number) => {
-        return moveToPosition() === 'after' && itemIndex === moveToIndex();
+        return isDragInsideThisList() && moveToPosition() === 'after' && itemIndex === moveToIndex();
     };
 
     return (
