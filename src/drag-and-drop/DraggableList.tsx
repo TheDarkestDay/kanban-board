@@ -1,5 +1,6 @@
 import { Component, createMemo, createSignal, For, Show } from "solid-js";
 import { Draggable } from "./Draggable";
+import { DragOverSensor } from "./DragOverSensor";
 import { DropTarget } from "./DropTarget";
 import { useMultiDraggableListStore } from "./MultiDraggableListStoreProvider";
 import { DropPosition, ListDirection } from "./types";
@@ -46,10 +47,18 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
     };
 
     const handleDrop = () => {
-        const to = moveToIndex();
-        const position = moveToPosition();
+        const lastRecordedMoveToList = store.dragToListIndex;
 
-        performDrag(to, position);
+        if (lastRecordedMoveToList !== index) {
+            setDragToListIndex(index);
+
+            performDrag(store.itemsLists[index].length - 1, 'after');
+        } else {
+            const to = moveToIndex();
+            const position = moveToPosition();
+
+            performDrag(to, position);
+        }
 
         setMoveToIndex(-1);
     };
@@ -63,10 +72,10 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
     };
 
     return (
-        <ul class={className}>
+        <DropTarget component="ul" onDrop={handleDrop} class={className}>
             <For each={store.itemsLists[index]}>
                 {(item, itemIndex) =>
-                    <DropTarget component="li" direction={direction} onDragOver={(position) => handleDragOver(itemIndex(), position)} onDrop={handleDrop}>
+                    <DragOverSensor component="li" direction={direction} onDragOver={(position) => handleDragOver(itemIndex(), position)}>
                         <Show when={isPointerBeforeItemAtIndex(itemIndex())}>
                             <div style={dropZoneStyle()}></div>
                         </Show>
@@ -76,13 +85,13 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
                         <Show when={isPointerAfterItemAtIndex(itemIndex())}>
                             <div style={dropZoneStyle()}></div>
                         </Show>
-                    </DropTarget>}
+                    </DragOverSensor>}
             </For>
             <Show when={store.itemsLists[index].length === 0 && store.isDragInProgress}>
-                <DropTarget direction={direction} onDrop={handleDrop} onDragOver={() => handleDragOver(0, 'before')}>
+                <DragOverSensor direction={direction} onDragOver={() => handleDragOver(0, 'before')}>
                     <div style={dropZoneStyle()}></div>
-                </DropTarget>
+                </DragOverSensor>
             </Show>
-        </ul>
+        </DropTarget>
     );
 };
