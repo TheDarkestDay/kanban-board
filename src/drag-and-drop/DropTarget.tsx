@@ -4,11 +4,14 @@ import { Dynamic } from "solid-js/web";
 type Props = {
     class?: string;
     onDrop: () => void;
+    onDragEnter?: () => void;
     component?: ValidComponent;
     children?: JSXElement;
 };
 
 export const DropTarget: Component<Props> = (props) => {
+    let ref: HTMLElement | undefined;
+
     const handleDragOver = (event: DragEvent) => {
         event.preventDefault();
     };
@@ -18,8 +21,14 @@ export const DropTarget: Component<Props> = (props) => {
         props.onDrop();
     };
 
+    const handleDragEnter = (event: DragEvent) => {
+        if (event.target === ref && props.onDragEnter) {
+            props.onDragEnter();
+        }
+    };
+
     return (
-        <Dynamic component={props.component} class={props.class} onDrop={handleDrop} onDragOver={handleDragOver}>
+        <Dynamic ref={ref} component={props.component} class={props.class} onDragEnter={handleDragEnter} onDrop={handleDrop} onDragOver={handleDragOver}>
             {props.children}
         </Dynamic>
     );
