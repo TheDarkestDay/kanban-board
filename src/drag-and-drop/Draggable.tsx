@@ -1,4 +1,4 @@
-import { Component, JSXElement, onMount, onCleanup } from "solid-js";
+import { Component, JSXElement } from "solid-js";
 
 type Props = {
     children: JSXElement;
@@ -24,26 +24,8 @@ export const Draggable: Component<Props> = ({children, onDragStart, onDragEnd}) 
         onDragEnd();
     };
 
-    onMount(() => {
-        if (rootElement == null) {
-            return;
-        }
-
-        rootElement.addEventListener('dragstart', handleDragStart);
-        rootElement.addEventListener('dragend', handleDragEnd);
-    });
-
-    onCleanup(() => {
-        if (rootElement == null) {
-            return;
-        }
-
-        rootElement.removeEventListener('dragstart', handleDragStart);
-        rootElement.removeEventListener('dragend', handleDragEnd);
-    });
-
     return (
-        <div ref={rootElement} draggable={true}>
+        <div ref={rootElement} draggable={true} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             {children}
         </div>
     );
