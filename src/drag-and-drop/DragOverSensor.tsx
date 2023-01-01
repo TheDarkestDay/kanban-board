@@ -1,4 +1,4 @@
-import type { Component, JSXElement } from 'solid-js';
+import type { Component, JSXElement, JSX } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 
 import { DropPosition, ListDirection } from './types';
@@ -6,12 +6,16 @@ import { DropPosition, ListDirection } from './types';
 type Props = {
     children: JSXElement;
     component?: string;
+    style?: JSX.CSSProperties | string;
+    onTransitionEnd?: () => void;
     onDragOver: (position: DropPosition) => void;
     direction: ListDirection;
 };
 
-export const DragOverSensor: Component<Props> = ({children, component = 'div', onDragOver, direction}: Props) => {
+export const DragOverSensor: Component<Props> = (props: Props) => {
     let rootElement: HTMLDivElement | undefined;
+
+    const { direction, onDragOver, component } = props;
 
     const handleDragOver = (event: DragEvent) => {
         event.preventDefault();
@@ -38,8 +42,8 @@ export const DragOverSensor: Component<Props> = ({children, component = 'div', o
     };
 
     return (
-        <Dynamic ref={rootElement} component={component} onDragOver={handleDragOver}>
-            {children}
+        <Dynamic ref={rootElement} onTransitionEnd={props.onTransitionEnd} style={props.style} component={component} onDragOver={handleDragOver}>
+            {props.children}
         </Dynamic>
     );
 };
