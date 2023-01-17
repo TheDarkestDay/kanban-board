@@ -10,10 +10,12 @@ type Props = {
 export const Draggable: Component<Props> = (props: Props) => {
     let rootElement: HTMLDivElement | undefined;
 
-    const handleDragStart = () => {
+    const handleDragStart = (event: DragEvent) => {
         if (rootElement == null) {
             return;
         }
+
+        event.dataTransfer?.setData('text/plain', '0');
 
         props.onDragStart(
             rootElement.offsetWidth,
