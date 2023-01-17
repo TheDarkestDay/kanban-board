@@ -1,12 +1,13 @@
-import { Component, JSXElement } from "solid-js";
+import { Component, JSX, JSXElement } from "solid-js";
 
 type Props = {
     children: JSXElement;
+    style?: JSX.CSSProperties;
     onDragStart: (width: number, height: number) => void;
     onDragEnd: () => void;
 };
 
-export const Draggable: Component<Props> = ({children, onDragStart, onDragEnd}) => {
+export const Draggable: Component<Props> = (props: Props) => {
     let rootElement: HTMLDivElement | undefined;
 
     const handleDragStart = () => {
@@ -14,19 +15,19 @@ export const Draggable: Component<Props> = ({children, onDragStart, onDragEnd}) 
             return;
         }
 
-        onDragStart(
+        props.onDragStart(
             rootElement.offsetWidth,
             rootElement.offsetHeight
         );
     };
 
     const handleDragEnd = () => {
-        onDragEnd();
+        props.onDragEnd();
     };
 
     return (
-        <div ref={rootElement} draggable={true} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-            {children}
+        <div ref={rootElement} style={props.style} draggable={true} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+            {props.children}
         </div>
     );
 };

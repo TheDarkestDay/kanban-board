@@ -20,7 +20,7 @@ type DropAt = {
 
 export const DraggableList: Component<Props> = ({ class: className, ItemComponent, direction, index }) => {
     const { store, setDragFromListIndex, setDragInProgress, setDraggableElementSizes, setDragFromItemIndex, setDragToListIndex, performDrag } = useMultiDraggableListStore();
-    const { styles: itemsStyles, applySlideDownTransitionToElementsFrom, reset } = useDraggableListItemsStyles(store.itemsLists[index].length);
+    const { styles: itemsStyles, reset } = useDraggableListItemsStyles(store.itemsLists[index].length);
     const [moveToIndex, setMoveToIndex] = createSignal(-1);
     const [hasFinishedAnimatingElements, setFinishedAnimatingElements] = createSignal(true);
     const [moveToPosition, setMoveToPosition] = createSignal<DropPosition>('before');
@@ -61,20 +61,11 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
             setMoveToPosition(position);
 
             setLastDropAt({ index: itemIndex, position });
-
-            setFinishedAnimatingElements(false);
-            applySlideDownTransitionToElementsFrom(itemIndex);
         }
     }
 
     const handleDragOver = (itemIndex: number, position: DropPosition) => {
-        if (itemIndex === store.itemsLists[index].length - 1 && position === 'after') {
-            updateDropAt(itemIndex, position);
-        } else {
-            const normalizedIndex = position === 'after' ? itemIndex + 1 : itemIndex;
-
-            updateDropAt(normalizedIndex, 'before');
-        }
+        updateDropAt(itemIndex, position);
 
         setDragHandledByChildSensors(true);
         setDragToListIndex(index);
@@ -113,14 +104,6 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
         setMoveToPosition('after');
     };
 
-    const isPointerBeforeItemAtIndex = (itemIndex: number) => {
-        return hasFinishedAnimatingElements() && isDragInsideThisList() && moveToPosition() === 'before' && itemIndex === moveToIndex();
-    };
-
-    const isPointerAfterItemAtIndex = (itemIndex: number) => {
-        return hasFinishedAnimatingElements() && isDragInsideThisList() && moveToPosition() === 'after' && itemIndex === moveToIndex();
-    };
-
     const handleElementsDoneAnimating = () => {
         if (hasFinishedAnimatingElements()) {
             return;
@@ -134,20 +117,15 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
         <DropTarget component="ul" onDrop={handleDrop} class={className} onDragEnter={handleListDragEnter}>
             <For each={store.itemsLists[index]}>
                 {(item, itemIndex) =>
-                    <>
-                        <Show when={isPointerBeforeItemAtIndex(itemIndex())}>
+                    <DragOverSensor component="li" onTransitionEnd={handleElementsDoneAnimating} style={itemsStyles()[itemIndex()]} direction={direction} onDragOver={(position) => handleDragOver(itemIndex(), position)}>
+                        <Show when={itemIndex() === moveToIndex()}>
                             <div style={dropZoneStyle()}></div>
                         </Show>
-                        <DragOverSensor component="li" onTransitionEnd={handleElementsDoneAnimating} style={itemsStyles()[itemIndex()]} direction={direction} onDragOver={(position) => handleDragOver(itemIndex(), position)}>
-                            <Draggable onDragStart={(width, height) => handleDragStart(itemIndex(), width, height)} onDragEnd={handleDragEnd}>
-                                <ItemComponent {...item} />
-                            </Draggable>
-                        </DragOverSensor>
-                    </>}
+                        <Draggable style={itemIndex() === moveToIndex() ? {position: 'absolute', left: '-9999px', top: '-9999px'} : undefined} onDragStart={(width, height) => handleDragStart(itemIndex(), width, height)} onDragEnd={handleDragEnd}>
+                            <ItemComponent {...item} />
+                        </Draggable>
+                    </DragOverSensor>}
             </For>
-            <Show when={isPointerAfterItemAtIndex(Math.max(0, store.itemsLists[index].length - 1))}>
-                <div style={dropZoneStyle()}></div>
-            </Show>
         </DropTarget>
     );
 };
