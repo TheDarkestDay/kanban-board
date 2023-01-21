@@ -1,10 +1,10 @@
-import { Component, createEffect, createMemo, createSignal, For, Show } from "solid-js";
+import { Component, createEffect, createMemo, createSignal, children, For } from "solid-js";
+import { ResolvedJSXElement } from "solid-js/types/reactive/signal";
 import { Draggable } from "./Draggable";
 import { DragOverSensor } from "./DragOverSensor";
 import { DropTarget } from "./DropTarget";
-import { useMultiDraggableListStore } from "./MultiDraggableListStoreProvider";
+import { dragItemByIndex, insertItemAt, useMultiDraggableListStore } from "./MultiDraggableListStoreProvider";
 import { DropPosition, ListDirection } from "./types";
-import { useDraggableListItemsStyles } from "./use-draggable-list-items-styles";
 
 type Props = {
     class?: string;
@@ -18,11 +18,9 @@ type DropAt = {
     position: DropPosition;
 };
 
-export const DraggableList: Component<Props> = ({ class: className, ItemComponent, direction, index }) => {
+export const DraggableList: Component<Props> = (props: Props) => {
     const { store, setDragFromListIndex, setDragInProgress, setDraggableElementSizes, setDragFromItemIndex, setDragToListIndex, performDrag } = useMultiDraggableListStore();
-    const { styles: itemsStyles, reset } = useDraggableListItemsStyles(store.itemsLists[index].length);
     const [moveToIndex, setMoveToIndex] = createSignal(-1);
-    const [hasFinishedAnimatingElements, setFinishedAnimatingElements] = createSignal(true);
     const [moveToPosition, setMoveToPosition] = createSignal<DropPosition>('before');
     const [lastDropAt, setLastDropAt] = createSignal<DropAt>({
         index: -1,
@@ -38,7 +36,7 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
             };
         }
     });
-    const isDragInsideThisList = createMemo(() => store.dragToListIndex === index);
+    const isDragInsideThisList = createMemo(() => store.dragToListIndex === props.index);
 
     createEffect(() => {
         if (!isDragInsideThisList()) {
@@ -48,7 +46,7 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
 
     const handleDragStart = (itemIndex: number, draggableItemWidth: number, draggableItemHeight: number) => {
         setDragFromItemIndex(itemIndex);
-        setDragFromListIndex(index);
+        setDragFromListIndex(props.index);
         setDraggableElementSizes(draggableItemWidth, draggableItemHeight);
         setDragInProgress(true);
     }
@@ -68,7 +66,7 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
         updateDropAt(itemIndex, position);
 
         setDragHandledByChildSensors(true);
-        setDragToListIndex(index);
+        setDragToListIndex(props.index);
     };
 
     const handleDragEnd = () => {
@@ -78,10 +76,10 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
     const handleDrop = () => {
         const lastRecordedMoveToList = store.dragToListIndex;
 
-        if (lastRecordedMoveToList !== index) {
-            setDragToListIndex(index);
+        if (lastRecordedMoveToList !== props.index) {
+            setDragToListIndex(props.index);
 
-            performDrag(store.itemsLists[index].length - 1, 'after');
+            performDrag(store.itemsLists[props.index].length - 1, 'after');
         } else {
             const to = moveToIndex();
             const position = moveToPosition();
@@ -98,33 +96,40 @@ export const DraggableList: Component<Props> = ({ class: className, ItemComponen
         }
 
         setMoveToIndex(
-            Math.max(0, store.itemsLists[index].length - 1),
+            Math.max(0, store.itemsLists[props.index].length - 1),
         );
-        setDragToListIndex(index);
+        setDragToListIndex(props.index);
         setMoveToPosition('after');
     };
 
-    const handleElementsDoneAnimating = () => {
-        if (hasFinishedAnimatingElements()) {
-            return;
-        }
-
-        setFinishedAnimatingElements(true);
-        reset();
+    const isItemBeingDragged = (itemIndex: number) => {
+        return store.dragFromListIndex === props.index && itemIndex === store.dragFromItemIndex;
     };
 
+    const listItemsElements = createMemo(() => {
+        return store.itemsLists[props.index].map((item, itemIndex) => {
+            return <DragOverSensor component="li" direction={props.direction} onDragOver={(position) => handleDragOver(itemIndex, position)}>
+                <Draggable style={{opacity: isItemBeingDragged(itemIndex) ? 0.5 : 1}} onDragStart={(width, height) => handleDragStart(itemIndex, width, height)} onDragEnd={handleDragEnd}>
+                    <props.ItemComponent {...item} />
+                </Draggable>
+            </DragOverSensor>;
+        })
+    });
+
+    const renderedItemsElements = createMemo(() => {
+        const elements = listItemsElements();
+
+        if (!isDragInsideThisList()) {
+            return elements;
+        }
+
+        return insertItemAt(elements.slice(), <div style={dropZoneStyle()}></div>, moveToIndex(), moveToPosition());
+    });
+
     return (
-        <DropTarget component="ul" onDrop={handleDrop} class={className} onDragEnter={handleListDragEnter}>
-            <For each={store.itemsLists[index]}>
-                {(item, itemIndex) =>
-                    <DragOverSensor component="li" onTransitionEnd={handleElementsDoneAnimating} style={itemsStyles()[itemIndex()]} direction={direction} onDragOver={(position) => handleDragOver(itemIndex(), position)}>
-                        <Show when={itemIndex() === moveToIndex()}>
-                            <div style={dropZoneStyle()}></div>
-                        </Show>
-                        <Draggable style={itemIndex() === moveToIndex() ? {position: 'absolute', left: '-9999px', top: '-9999px'} : undefined} onDragStart={(width, height) => handleDragStart(itemIndex(), width, height)} onDragEnd={handleDragEnd}>
-                            <ItemComponent {...item} />
-                        </Draggable>
-                    </DragOverSensor>}
+        <DropTarget component="ul" onDrop={handleDrop} class={props.class} onDragEnter={handleListDragEnter}>
+            <For each={renderedItemsElements()}>
+                {(item) => item}
             </For>
         </DropTarget>
     );

@@ -47,10 +47,10 @@ type MultiDraggableListState = {
     draggableElementHeight: number | null;
 };
 
-const insertItemAt = (itemsCopy: any[], itemToMove: any, to: number, position: DropPosition) => {
+export const insertItemAt = (itemsCopy: any[], itemToInsert: any, to: number, position: DropPosition) => {
     const positionAwareIndex = position === 'before' ? to : to + 1;
 
-    itemsCopy.splice(positionAwareIndex, 0, itemToMove);
+    itemsCopy.splice(positionAwareIndex, 0, itemToInsert);
 
     return itemsCopy;
 };
@@ -70,9 +70,9 @@ export const dragItemByIndex = (items: any[], from: number, to: number, position
 export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) => {
     const [store, setStore] = createStore<MultiDraggableListState>({
         itemsLists: props.data,
-        dragToListIndex: 0,
-        dragFromListIndex: 0,
-        dragFromItemIndex: 0,
+        dragToListIndex: -1,
+        dragFromListIndex: -1,
+        dragFromItemIndex: -1,
         draggableElementHeight: null,
         draggableElementWidth: null,
         isDragInProgress: false,
@@ -108,6 +108,9 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
                         state.itemsLists[dragToListIndex] = dragItemByIndex(state.itemsLists[dragToListIndex], dragFromItemIndex, destinationIndex, position);
                     }
 
+                    state.dragFromItemIndex = -1;
+                    state.dragFromListIndex = -1;
+                    state.dragToListIndex = -1;
                     state.isDragInProgress = false;
                 })
             );
