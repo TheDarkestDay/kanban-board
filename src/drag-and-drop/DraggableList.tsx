@@ -1,9 +1,9 @@
-import { Component, createEffect, createMemo, createSignal, children, For } from "solid-js";
-import { ResolvedJSXElement } from "solid-js/types/reactive/signal";
+import { Component, createEffect, createMemo, createSignal } from "solid-js";
+import { AnimatableList } from "./AnimatableList";
 import { Draggable } from "./Draggable";
 import { DragOverSensor } from "./DragOverSensor";
 import { DropTarget } from "./DropTarget";
-import { dragItemByIndex, insertItemAt, useMultiDraggableListStore } from "./MultiDraggableListStoreProvider";
+import { insertItemAt, useMultiDraggableListStore } from "./MultiDraggableListStoreProvider";
 import { DropPosition, ListDirection } from "./types";
 
 type Props = {
@@ -108,7 +108,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
 
     const listItemsElements = createMemo(() => {
         return store.itemsLists[props.index].map((item, itemIndex) => {
-            return <DragOverSensor component="li" direction={props.direction} onDragOver={(position) => handleDragOver(itemIndex, position)}>
+            return <DragOverSensor id={item.id} component="li" direction={props.direction} onDragOver={(position) => handleDragOver(itemIndex, position)}>
                 <Draggable style={{opacity: isItemBeingDragged(itemIndex) ? 0.5 : 1}} onDragStart={(width, height) => handleDragStart(itemIndex, width, height)} onDragEnd={handleDragEnd}>
                     <props.ItemComponent {...item} />
                 </Draggable>
@@ -123,14 +123,14 @@ export const DraggableList: Component<Props> = (props: Props) => {
             return elements;
         }
 
-        return insertItemAt(elements.slice(), <div style={dropZoneStyle()}></div>, moveToIndex(), moveToPosition());
+        return insertItemAt(elements.slice(), <div id="dropZone" style={dropZoneStyle()}></div>, moveToIndex(), moveToPosition());
     });
 
     return (
         <DropTarget component="ul" onDrop={handleDrop} class={props.class} onDragEnter={handleListDragEnter}>
-            <For each={renderedItemsElements()}>
-                {(item) => item}
-            </For>
+            <AnimatableList>
+                {renderedItemsElements}
+            </AnimatableList>
         </DropTarget>
     );
 };

@@ -5,6 +5,7 @@ import { DropPosition, ListDirection } from './types';
 
 type Props = {
     children: JSXElement;
+    id?: string;
     component?: string;
     style?: JSX.CSSProperties | string;
     onTransitionEnd?: () => void;
@@ -42,7 +43,7 @@ export const DragOverSensor: Component<Props> = (props: Props) => {
     };
 
     return (
-        <Dynamic ref={rootElement} onTransitionEnd={props.onTransitionEnd} style={props.style} component={component} onDragOver={handleDragOver}>
+        <Dynamic id={props.id} ref={rootElement} onTransitionEnd={props.onTransitionEnd} style={props.style} component={component} onDragOver={handleDragOver}>
             {props.children}
         </Dynamic>
     );
