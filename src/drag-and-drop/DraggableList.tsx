@@ -119,7 +119,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
     const renderedItemsElements = createMemo(() => {
         const elements = listItemsElements();
 
-        if (!isDragInsideThisList()) {
+        if (!isDragInsideThisList() || moveToIndex() === store.dragFromItemIndex) {
             return elements;
         }
 
