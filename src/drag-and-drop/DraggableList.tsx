@@ -1,5 +1,5 @@
 import { Component, createEffect, createMemo, createSignal } from "solid-js";
-import { AnimatableList, log } from "./AnimatableList";
+import { AnimatableList } from "./AnimatableList";
 import { Draggable } from "./Draggable";
 import { DragOverSensor } from "./DragOverSensor";
 import { DropTarget } from "./DropTarget";
@@ -55,7 +55,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
         const { index, position: lastTrackedPosition } = lastDropAt();
 
         if (index !== itemIndex || lastTrackedPosition !== position) {
-            log(`Set index to ${itemIndex}:${position}`);
+            console.log(`Set index to ${itemIndex}:${position}`);
             setMoveToIndex(itemIndex);
             setMoveToPosition(position);
 
@@ -125,7 +125,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
         if (!isDragInsideThisList() || adjustedIndex === store.dragFromItemIndex) {
             return elements;
         }
-        log(`Inserting item at ${adjustedIndex}`);
+        console.log(`Inserting item at ${adjustedIndex}`);
         return insertItemAt(elements.slice(), <div id="dropZone" style={dropZoneStyle()}></div>, adjustedIndex, 'before');
     });
 

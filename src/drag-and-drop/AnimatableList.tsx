@@ -1,4 +1,4 @@
-import { Component, createEffect, createMemo, createSignal, JSXElement } from 'solid-js';
+import { Component, createEffect, createSignal, JSXElement } from 'solid-js';
 import { children } from 'solid-js';
 
 type Props = {
@@ -7,126 +7,98 @@ type Props = {
 
 type ElementsOrder = Record<string, number>;
 
-export const log = (message: string) => {
-    const div = document.createElement('div');
-    div.textContent = message;
-    document.body.append(div);
+const areOrdersEqual = (orderA: Record<string, number>, orderB: Record<string, number>) => {
+    const idsA = Object.keys(orderA);
+    const idsB = Object.keys(orderB);
+    const areElementsPositionedTheSame = idsA.every((id) => orderB[id] === orderA[id]);
+
+    return idsA.length === idsB.length && areElementsPositionedTheSame;
+};
+
+const getElementsOrder = (list: any[]) => {
+    return list.reduce((acc, current, index) => {
+        acc[current.id] = index;
+
+        return acc;
+    }, {} as ElementsOrder)
 };
 
 export const AnimatableList: Component<Props> = (props: Props) => {
     const childElements = children(() => props.children);
-    const [elementsOrder, setElementsOrder] = createSignal<ElementsOrder | null>(null);
-    const [renderElementsIndexes, setRenderedElementsIndexes] = createSignal<number[]>([]);
-    const [isAnimatingChange, setAnimatingChange] = createSignal(false);
+    const [elementsList, setElementsList] = createSignal<HTMLElement[] | null>(null);
 
     createEffect(() => {
-        console.log('Starting effect');
-        if (isAnimatingChange()) {
-            console.log('Animation is in progress - returning');
+        const currentElements = childElements() as HTMLElement[];
+        const lastSeenElements = elementsList();
+
+        if (lastSeenElements == null) {
+            setElementsList(currentElements);
             return;
         }
 
-        const elements = childElements() as HTMLElement[];
-        log(`There are ${elements.length} elements`);
-        log('===========');
-        const currentOrder = elements.reduce((acc, current, index) => {
-            acc[current.id] = index;
-            log(`${current.id} is at ${index}`);
-
-            return acc;
-        }, {} as ElementsOrder);
-        const lastSeenOrder = elementsOrder();
-
-        if (lastSeenOrder == null) {
-            console.log('Saving order for the first time');
-            setElementsOrder(currentOrder);
-            setRenderedElementsIndexes(elements.map((_, index) => index));
-
-            return;
-        }
+        const currentOrder = getElementsOrder(currentElements);
+        const lastSeenOrder = getElementsOrder(lastSeenElements);
 
         const currentIds = Object.keys(currentOrder);
         const lastSeenIds = Object.keys(lastSeenOrder!);
-        const isOrderTheSame = currentIds.every((currentId) => lastSeenOrder[currentId] === currentOrder[currentId]);
-
-        if ((currentIds.length === lastSeenIds.length) && isOrderTheSame) {
-            return;
-        }
 
         if (currentIds.length > lastSeenIds.length) {
-            setAnimatingChange(true);
-            let transitionsInProgressCount = 0;
-
             const addedItemId = currentIds.find((currentId) => !lastSeenIds.includes(currentId))!;
 
             const addedItemIndex = currentOrder[addedItemId];
 
             const slideStartIndex = addedItemIndex + 1;
-            for (let i = slideStartIndex; i < elements.length; i++) {
-                const elementToSlideDown = elements[i];
+        
+            let remainingTransitionsCount = currentElements.length - slideStartIndex;
+            for (let i = slideStartIndex; i < currentElements.length; i++) {
+                const elementToSlideDown = currentElements[i];
                 
-                if (i === slideStartIndex) {
-                    const handleTransitionEnd = () => {
-                        elementToSlideDown.removeEventListener('transitionend', handleTransitionEnd);
-                        elementToSlideDown.style.transform = 'translate3d(0, 0, 0)';
-                        
-                        log(`${transitionsInProgressCount} transitions remaining`);
-                        setRenderedElementsIndexes(elements.map((_, index) => index));
-                        log(`Requesting to show all elements`);
-                        setAnimatingChange(false);
-                        setElementsOrder(currentOrder);
-                    };
-                    log(`Sliding element ${elements[i].id}`);
-                    elementToSlideDown.addEventListener('transitionend', handleTransitionEnd);
-                }
+                const handleTransitionEnd = () => {
+                    remainingTransitionsCount--;
+                    elementToSlideDown.style.transition = 'none';
+                    elementToSlideDown.style.transform = 'translate3d(0, 0, 0)';
+                    elementToSlideDown.removeEventListener('transitionend', handleTransitionEnd);
+
+                    if (remainingTransitionsCount === 0) {
+                        setElementsList(currentElements);
+                    }
+                };
+
+                elementToSlideDown.addEventListener('transitionend', handleTransitionEnd);
 
                 elementToSlideDown.style.transform = 'translate3d(0, 126px, 0)';
             }
-
-            log('Show only elements without one added');
-            setRenderedElementsIndexes(elements.map((_, index) => index).filter((index) => index !== addedItemIndex));
         } else if (currentIds.length < lastSeenIds.length) {
-            console.log('Item has been deleted');
-            setRenderedElementsIndexes(elements.map((_, index) => index));
-        } // else {
-        //     console.log('Item has been moved');
-        //     let transitionsInProgressCount = 0;
-        //     for (const elementId of Object.keys(currentOrder)) {
-        //         const movedElementLastIndex = lastSeenOrder[elementId];
-        //         const movedElementCurrentIndex = currentOrder[elementId];
+            setElementsList(currentElements);
+        } else if (currentIds.length === lastSeenIds.length) {
+            let remainingTransitionsCount = 0;
+            for (const element of lastSeenElements) {
+                const lastSeenElementIndex = lastSeenOrder[element.id];
+                const currentElementIndex = currentOrder[element.id];
 
-        //         if (movedElementCurrentIndex !== movedElementLastIndex) {
-        //             transitionsInProgressCount += 1;
-        //             const elementToAnimate = elements[movedElementCurrentIndex];
-        //             const indexDelta = movedElementLastIndex - movedElementCurrentIndex;
+                if (lastSeenElementIndex !== currentElementIndex) {
+                    console.log('Item has been moved');
+                    const indexDelta = currentElementIndex - lastSeenElementIndex;
 
-        //             const handleTransitionEnd = () => {
-        //                 transitionsInProgressCount--;
+                    remainingTransitionsCount += 1;
+                    const handleTransitionEnd = () => {
+                        remainingTransitionsCount--;
+                        element.removeEventListener('transitionend', handleTransitionEnd);
+                        element.style.transition = 'none';
+                        element.style.transform = 'translate3d(0, 0, 0)';
 
-        //                 if (transitionsInProgressCount === 0) {
-        //                     elementToAnimate.removeAttribute('style');
-        //                 }
+                        if (remainingTransitionsCount === 0) {
+                            setElementsList(currentElements);
+                        }
+                    };
 
-        //                 setRenderedElementsIndexes(elements.map((_, index) => index));
-        //                 elementToAnimate.removeEventListener('transitionend', handleTransitionEnd);
-        //             };
-
-        //             elementToAnimate.addEventListener('transitionend', handleTransitionEnd);
-
-        //             const shiftValue = indexDelta > 0 ? -126 : 126;
-        //             elementToAnimate.setAttribute('style', `transition: transform .25s; transform: translate3d(0, ${shiftValue}px, 0)`);
-        //         }
-        //     }
-        // }
+                    element.addEventListener('transitionend', handleTransitionEnd);
+                    element.style.transition = 'transform .25s';
+                    element.style.transform = `translate3d(0, ${indexDelta > 0 ? '126px' : '-126px'}, 0)`;
+                }
+            }
+        }
     });
 
-    const renderedElements = createMemo(() => {
-        const elements = childElements() as HTMLElement[];
-
-        return renderElementsIndexes().map((index) => {
-            return elements![index];
-        })
-    });
-
-    return renderedElements;
+    return elementsList;
 };
