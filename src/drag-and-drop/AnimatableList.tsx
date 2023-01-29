@@ -7,6 +7,12 @@ type Props = {
 
 type ElementsOrder = Record<string, number>;
 
+export const log = (message: string) => {
+    const div = document.createElement('div');
+    div.textContent = message;
+    document.body.append(div);
+};
+
 export const AnimatableList: Component<Props> = (props: Props) => {
     const childElements = children(() => props.children);
     const [elementsOrder, setElementsOrder] = createSignal<ElementsOrder | null>(null);
@@ -21,8 +27,11 @@ export const AnimatableList: Component<Props> = (props: Props) => {
         }
 
         const elements = childElements() as HTMLElement[];
+        log(`There are ${elements.length} elements`);
+        log('===========');
         const currentOrder = elements.reduce((acc, current, index) => {
             acc[current.id] = index;
+            log(`${current.id} is at ${index}`);
 
             return acc;
         }, {} as ElementsOrder);
@@ -40,15 +49,11 @@ export const AnimatableList: Component<Props> = (props: Props) => {
         const lastSeenIds = Object.keys(lastSeenOrder!);
         const isOrderTheSame = currentIds.every((currentId) => lastSeenOrder[currentId] === currentOrder[currentId]);
 
-        if (currentIds.length === lastSeenIds.length && isOrderTheSame) {
-            console.log('Stopping because order is the same');
+        if ((currentIds.length === lastSeenIds.length) && isOrderTheSame) {
             return;
         }
 
-        console.log('Comparing order');
-
         if (currentIds.length > lastSeenIds.length) {
-            console.log('Item has been added');
             setAnimatingChange(true);
             let transitionsInProgressCount = 0;
 
@@ -59,25 +64,26 @@ export const AnimatableList: Component<Props> = (props: Props) => {
             const slideStartIndex = addedItemIndex + 1;
             for (let i = slideStartIndex; i < elements.length; i++) {
                 const elementToSlideDown = elements[i];
-
-                transitionsInProgressCount += 1;
                 
-                const handleTransitionEnd = () => {
-                    console.log('transition end fired');
-                    elementToSlideDown.removeEventListener('transitionend', handleTransitionEnd);
-                    elementToSlideDown.removeAttribute('style');
-                    transitionsInProgressCount--;
-
-                    if (transitionsInProgressCount === 0) {    
+                if (i === slideStartIndex) {
+                    const handleTransitionEnd = () => {
+                        elementToSlideDown.removeEventListener('transitionend', handleTransitionEnd);
+                        elementToSlideDown.style.transform = 'translate3d(0, 0, 0)';
+                        
+                        log(`${transitionsInProgressCount} transitions remaining`);
                         setRenderedElementsIndexes(elements.map((_, index) => index));
+                        log(`Requesting to show all elements`);
                         setAnimatingChange(false);
-                    }
-                };
-                elementToSlideDown.addEventListener('transitionend', handleTransitionEnd);
+                        setElementsOrder(currentOrder);
+                    };
+                    log(`Sliding element ${elements[i].id}`);
+                    elementToSlideDown.addEventListener('transitionend', handleTransitionEnd);
+                }
 
-                elementToSlideDown.setAttribute('style', 'transition: transform .25s; transform: translate3d(0, 126px, 0)');
+                elementToSlideDown.style.transform = 'translate3d(0, 126px, 0)';
             }
 
+            log('Show only elements without one added');
             setRenderedElementsIndexes(elements.map((_, index) => index).filter((index) => index !== addedItemIndex));
         } else if (currentIds.length < lastSeenIds.length) {
             console.log('Item has been deleted');

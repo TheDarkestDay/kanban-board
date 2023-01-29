@@ -48,6 +48,12 @@ export const Board: Component = () => {
                     subtasks: []
                 },
                 {
+                    title: 'Choose E2E testing framework',
+                    id: 'A',
+                    description: '',
+                    subtasks: []
+                },
+                {
                     title: 'Researching drag-n-drop libraries',
                     id: '5',
                     description: '',

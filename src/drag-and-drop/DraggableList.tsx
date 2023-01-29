@@ -1,5 +1,5 @@
 import { Component, createEffect, createMemo, createSignal } from "solid-js";
-import { AnimatableList } from "./AnimatableList";
+import { AnimatableList, log } from "./AnimatableList";
 import { Draggable } from "./Draggable";
 import { DragOverSensor } from "./DragOverSensor";
 import { DropTarget } from "./DropTarget";
@@ -55,6 +55,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
         const { index, position: lastTrackedPosition } = lastDropAt();
 
         if (index !== itemIndex || lastTrackedPosition !== position) {
+            log(`Set index to ${itemIndex}:${position}`);
             setMoveToIndex(itemIndex);
             setMoveToPosition(position);
 
@@ -108,7 +109,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
 
     const listItemsElements = createMemo(() => {
         return store.itemsLists[props.index].map((item, itemIndex) => {
-            return <DragOverSensor id={item.id} component="li" direction={props.direction} onDragOver={(position) => handleDragOver(itemIndex, position)}>
+            return <DragOverSensor style={{transition: 'transform .25s'}} id={item.id} component="li" direction={props.direction} onDragOver={(position) => handleDragOver(itemIndex, position)}>
                 <Draggable style={{opacity: isItemBeingDragged(itemIndex) ? 0.5 : 1}} onDragStart={(width, height) => handleDragStart(itemIndex, width, height)} onDragEnd={handleDragEnd}>
                     <props.ItemComponent {...item} />
                 </Draggable>
@@ -118,12 +119,14 @@ export const DraggableList: Component<Props> = (props: Props) => {
 
     const renderedItemsElements = createMemo(() => {
         const elements = listItemsElements();
+        const { index: dropIndex, position } = lastDropAt();
+        const adjustedIndex = position === 'after' ? dropIndex + 1 : dropIndex;
 
-        if (!isDragInsideThisList() || moveToIndex() === store.dragFromItemIndex) {
+        if (!isDragInsideThisList() || adjustedIndex === store.dragFromItemIndex) {
             return elements;
         }
-
-        return insertItemAt(elements.slice(), <div id="dropZone" style={dropZoneStyle()}></div>, moveToIndex(), moveToPosition());
+        log(`Inserting item at ${adjustedIndex}`);
+        return insertItemAt(elements.slice(), <div id="dropZone" style={dropZoneStyle()}></div>, adjustedIndex, 'before');
     });
 
     return (
