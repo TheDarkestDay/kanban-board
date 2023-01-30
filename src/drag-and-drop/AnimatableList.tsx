@@ -43,6 +43,7 @@ export const AnimatableList: Component<Props> = (props: Props) => {
         const lastSeenIds = Object.keys(lastSeenOrder!);
 
         if (currentIds.length > lastSeenIds.length) {
+            console.log('New element seems to be added');
             const addedItemId = currentIds.find((currentId) => !lastSeenIds.includes(currentId))!;
 
             const addedItemIndex = currentOrder[addedItemId];
@@ -66,11 +67,14 @@ export const AnimatableList: Component<Props> = (props: Props) => {
 
                 elementToSlideDown.addEventListener('transitionend', handleTransitionEnd);
 
+                elementToSlideDown.style.transition = 'transform .25s';
                 elementToSlideDown.style.transform = 'translate3d(0, 126px, 0)';
             }
         } else if (currentIds.length < lastSeenIds.length) {
+            console.log('Element has been removed');
             setElementsList(currentElements);
         } else if (currentIds.length === lastSeenIds.length) {
+            console.log('Elements may have been moved');
             let remainingTransitionsCount = 0;
             for (const element of lastSeenElements) {
                 const lastSeenElementIndex = lastSeenOrder[element.id];
