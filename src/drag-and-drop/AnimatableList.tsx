@@ -80,6 +80,11 @@ export const AnimatableList: Component<Props> = (props: Props) => {
                 const lastSeenElementIndex = lastSeenOrder[element.id];
                 const currentElementIndex = currentOrder[element.id];
 
+                if (lastSeenElementIndex == null || currentElementIndex == null) {
+                    setElementsList(currentElements);
+                    return;
+                }
+
                 if (lastSeenElementIndex !== currentElementIndex) {
                     console.log('Item has been moved');
                     const indexDelta = currentElementIndex - lastSeenElementIndex;

@@ -122,12 +122,12 @@ export const DraggableList: Component<Props> = (props: Props) => {
         const { index: dropIndex, position } = lastDropAt();
         const adjustedIndex = position === 'after' ? dropIndex + 1 : dropIndex;
 
-        if (!isDragInsideThisList() || adjustedIndex === store.dragFromItemIndex) {
+        if (isDragInsideThisList()) {
             console.log('Drag is not inside the list, so no dropzone is added');
-            return elements;
+            return insertItemAt(elements.slice(), <div id="dropZone" style={dropZoneStyle()}></div>, adjustedIndex, 'before');
         }
         console.log(`Inserting item at ${adjustedIndex}`);
-        return insertItemAt(elements.slice(), <div id="dropZone" style={dropZoneStyle()}></div>, adjustedIndex, 'before');
+        return elements;
     });
 
     return (
