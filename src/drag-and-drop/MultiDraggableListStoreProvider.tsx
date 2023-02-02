@@ -14,6 +14,7 @@ type MultiDraggableListStore = {
     setDragFromItemIndex: (index: number) => void,
     setDraggableElementSizes: (width: number, height: number) => void;
     setDragInProgress: (value: boolean) => void;
+    stopDrag: () => void;
     performDrag: (destinationIndex: number, position: DropPosition) => void;
 };
 
@@ -32,6 +33,7 @@ const initialContextValue: MultiDraggableListStore = {
     setDragFromItemIndex: () => {},
     setDraggableElementSizes: () => {},
     setDragInProgress: () => {},
+    stopDrag: () => {},
     performDrag: () => {}
 };
 
@@ -95,6 +97,16 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
         setDragInProgress(value: boolean) {
             setStore({isDragInProgress: value});
         },
+        stopDrag() {
+            setStore(
+                produce((state) => {
+                    state.dragFromItemIndex = -1;
+                    state.dragFromListIndex = -1;
+                    state.dragToListIndex = -1;
+                    state.isDragInProgress = false;
+                })
+            )
+        },
         performDrag(destinationIndex: number, position: DropPosition) {
             const { dragFromListIndex, dragFromItemIndex, dragToListIndex } = store;
 
@@ -125,7 +137,7 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
 };
 
 export const useMultiDraggableListStore = () => {
-    const { store, setDragFromListIndex, setDragInProgress, setDragToListIndex, setDraggableElementSizes, setDragFromItemIndex, performDrag } = useContext(MultiDraggableListStoreContext);
+    const { store, stopDrag, setDragFromListIndex, setDragInProgress, setDragToListIndex, setDraggableElementSizes, setDragFromItemIndex, performDrag } = useContext(MultiDraggableListStoreContext);
 
     return {
         store,
@@ -134,6 +146,7 @@ export const useMultiDraggableListStore = () => {
         setDragInProgress,
         setDragFromItemIndex,
         setDraggableElementSizes,
+        stopDrag,
         performDrag
     };
 };

@@ -2,18 +2,11 @@ import { Component, createEffect, createSignal, JSXElement } from 'solid-js';
 import { children } from 'solid-js';
 
 type Props = {
-    children: JSXElement
+    children: JSXElement;
+    shouldSkipRemovalAnimation?: boolean;
 };
 
 type ElementsOrder = Record<string, number>;
-
-const areOrdersEqual = (orderA: Record<string, number>, orderB: Record<string, number>) => {
-    const idsA = Object.keys(orderA);
-    const idsB = Object.keys(orderB);
-    const areElementsPositionedTheSame = idsA.every((id) => orderB[id] === orderA[id]);
-
-    return idsA.length === idsB.length && areElementsPositionedTheSame;
-};
 
 const getElementsOrder = (list: any[]) => {
     return list.reduce((acc, current, index) => {
@@ -51,6 +44,11 @@ export const AnimatableList: Component<Props> = (props: Props) => {
             const slideStartIndex = addedItemIndex + 1;
         
             let remainingTransitionsCount = currentElements.length - slideStartIndex;
+            if (remainingTransitionsCount === 0) {
+                setElementsList(currentElements);
+                return;
+            }
+
             for (let i = slideStartIndex; i < currentElements.length; i++) {
                 const elementToSlideDown = currentElements[i];
                 
@@ -72,10 +70,50 @@ export const AnimatableList: Component<Props> = (props: Props) => {
             }
         } else if (currentIds.length < lastSeenIds.length) {
             console.log('Element has been removed');
-            setElementsList(currentElements);
+            console.log('Should skip animation: ', props.shouldSkipRemovalAnimation);
+
+            if (props.shouldSkipRemovalAnimation) {
+                setElementsList(currentElements);
+                return;
+            }
+
+            const removedItemId = lastSeenIds.find((lastSeenId) => !currentIds.includes(lastSeenId))!;
+            const removedItemIndex = lastSeenOrder[removedItemId];
+            const slideStartIndex = removedItemIndex + 1;
+        
+            let remainingTransitionsCount = lastSeenElements.length - slideStartIndex;
+            if (remainingTransitionsCount === 0) {
+                setElementsList(currentElements);
+                return;
+            }
+
+            const removedItem = lastSeenElements[removedItemIndex];
+            removedItem.style.opacity = '0';
+
+            for (let i = slideStartIndex; i < lastSeenElements.length; i++) {
+                const elementToSlideUp = lastSeenElements[i];
+                
+                const handleTransitionEnd = () => {
+                    remainingTransitionsCount--;
+                    elementToSlideUp.style.transition = 'none';
+                    elementToSlideUp.style.transform = 'translate3d(0, 0, 0)';
+                    elementToSlideUp.removeEventListener('transitionend', handleTransitionEnd);
+
+                    if (remainingTransitionsCount === 0) {
+                        setElementsList(currentElements);
+                    }
+                };
+
+                elementToSlideUp.addEventListener('transitionend', handleTransitionEnd);
+
+                elementToSlideUp.style.transition = 'transform .25s';
+                elementToSlideUp.style.transform = 'translate3d(0, -126px, 0)';
+            }
         } else if (currentIds.length === lastSeenIds.length) {
             console.log('Elements may have been moved');
             let remainingTransitionsCount = 0;
+            let areListsTheSame = true;
+
             for (const element of lastSeenElements) {
                 const lastSeenElementIndex = lastSeenOrder[element.id];
                 const currentElementIndex = currentOrder[element.id];
@@ -104,7 +142,15 @@ export const AnimatableList: Component<Props> = (props: Props) => {
                     element.addEventListener('transitionend', handleTransitionEnd);
                     element.style.transition = 'transform .25s';
                     element.style.transform = `translate3d(0, ${indexDelta > 0 ? '126px' : '-126px'}, 0)`;
+
+                    if (areListsTheSame) {
+                        areListsTheSame = false;
+                    }
                 }
+            }
+
+            if (areListsTheSame) {
+                setElementsList(currentElements);
             }
         }
     });

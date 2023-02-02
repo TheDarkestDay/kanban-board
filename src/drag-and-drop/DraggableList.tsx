@@ -19,7 +19,7 @@ type DropAt = {
 };
 
 export const DraggableList: Component<Props> = (props: Props) => {
-    const { store, setDragFromListIndex, setDragInProgress, setDraggableElementSizes, setDragFromItemIndex, setDragToListIndex, performDrag } = useMultiDraggableListStore();
+    const { store, setDragFromListIndex, stopDrag, setDragInProgress, setDraggableElementSizes, setDragFromItemIndex, setDragToListIndex, performDrag } = useMultiDraggableListStore();
     const [moveToIndex, setMoveToIndex] = createSignal(-1);
     const [moveToPosition, setMoveToPosition] = createSignal<DropPosition>('before');
     const [lastDropAt, setLastDropAt] = createSignal<DropAt>({
@@ -37,6 +37,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
         }
     });
     const isDragInsideThisList = createMemo(() => store.dragToListIndex === props.index);
+    const isDragBetweenElementsOfThisList = createMemo(() => isDragInsideThisList() && store.dragFromListIndex === props.index);
 
     createEffect(() => {
         if (!isDragInsideThisList()) {
@@ -71,10 +72,13 @@ export const DraggableList: Component<Props> = (props: Props) => {
     };
 
     const handleDragEnd = () => {
+        console.log('Drag ended');
         setMoveToIndex(-1);
+        stopDrag();
     };
 
     const handleDrop = () => {
+        console.log('Dropped');
         const lastRecordedMoveToList = store.dragToListIndex;
 
         if (lastRecordedMoveToList !== props.index) {
@@ -120,19 +124,28 @@ export const DraggableList: Component<Props> = (props: Props) => {
     const renderedItemsElements = createMemo(() => {
         const elements = listItemsElements();
         const { index: dropIndex, position } = lastDropAt();
-        const adjustedIndex = position === 'after' ? dropIndex + 1 : dropIndex;
 
         if (isDragInsideThisList()) {
-            console.log('Drag is not inside the list, so no dropzone is added');
-            return insertItemAt(elements.slice(), <div id="dropZone" style={dropZoneStyle()}></div>, adjustedIndex, 'before');
+            console.log('Drag is inside the list');
+
+            // if (dropIndex === store.dragFromItemIndex) {
+            //     return elements;
+            // }
+
+            const insertionIndex = position === 'after' 
+                ? dropIndex + 1 
+                : dropIndex;
+            console.log(`Adding dropzone at ${insertionIndex}`);
+
+            return insertItemAt(elements.slice(), <div id="dropZone" style={dropZoneStyle()}></div>, Math.max(0, insertionIndex), 'before');
         }
-        console.log(`Inserting item at ${adjustedIndex}`);
+
         return elements;
     });
 
     return (
         <DropTarget component="ul" onDrop={handleDrop} class={props.class} onDragEnter={handleListDragEnter}>
-            <AnimatableList>
+            <AnimatableList shouldSkipRemovalAnimation={true}>
                 {renderedItemsElements}
             </AnimatableList>
         </DropTarget>
