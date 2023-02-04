@@ -147,7 +147,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
 
     return (
         <DropTarget component="ul" onDrop={handleDrop} class={props.class} onDragEnter={handleListDragEnter}>
-            <AnimatableList shouldSkipRemovalAnimation={true}>
+            <AnimatableList shouldSkipRemovalAnimation={!store.isDragInProgress}>
                 {renderedItemsElements}
             </AnimatableList>
         </DropTarget>
