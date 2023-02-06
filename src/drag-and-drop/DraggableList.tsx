@@ -3,8 +3,9 @@ import { AnimatableList } from "./AnimatableList";
 import { Draggable } from "./Draggable";
 import { DragOverSensor } from "./DragOverSensor";
 import { DropTarget } from "./DropTarget";
-import { insertItemAt, useMultiDraggableListStore } from "./MultiDraggableListStoreProvider";
+import { useMultiDraggableListStore } from "./MultiDraggableListStoreProvider";
 import { DropPosition, ListDirection } from "./types";
+import { useDropAt } from "./use-drop-at";
 
 type Props = {
     class?: string;
@@ -13,29 +14,12 @@ type Props = {
     ItemComponent: Component<any>;
 };
 
-type DropAt = {
-    index: number;
-    position: DropPosition;
-};
-
 export const DraggableList: Component<Props> = (props: Props) => {
     const { store, setDragFromListIndex, stopDrag, setDragInProgress, setDraggableElementSizes, setDragFromItemIndex, setDragToListIndex, performDrag } = useMultiDraggableListStore();
     const [moveToIndex, setMoveToIndex] = createSignal(-1);
     const [moveToPosition, setMoveToPosition] = createSignal<DropPosition>('before');
-    const [lastDropAt, setLastDropAt] = createSignal<DropAt>({
-        index: -1,
-        position: 'before'
-    });
+    const { dropAt, setDropAt, lastDropAt } = useDropAt();
     const [isDragHandledByChildSensors, setDragHandledByChildSensors] = createSignal(false);
-    const dropZoneStyle = createMemo(() => {
-        if (store.isDragInProgress) {
-            return {
-                width: `${store.draggableElementWidth}px`,
-                height: `${store.draggableElementHeight}px`,
-                'background-color': 'red'
-            };
-        }
-    });
     const isDragInsideThisList = createMemo(() => store.dragToListIndex === props.index);
     const isDragBetweenElementsOfThisList = createMemo(() => isDragInsideThisList() && store.dragFromListIndex === props.index);
 
@@ -48,23 +32,31 @@ export const DraggableList: Component<Props> = (props: Props) => {
     const handleDragStart = (itemIndex: number, draggableItemWidth: number, draggableItemHeight: number) => {
         setDragFromItemIndex(itemIndex);
         setDragFromListIndex(props.index);
+        setDropAt({
+            index: itemIndex,
+            position: 'before'
+        });
         setDraggableElementSizes(draggableItemWidth, draggableItemHeight);
         setDragInProgress(true);
     }
 
     const updateDropAt = (itemIndex: number, position: DropPosition) => {
-        const { index, position: lastTrackedPosition } = lastDropAt();
+        const { index, position: lastTrackedPosition } = dropAt();
 
         if (index !== itemIndex || lastTrackedPosition !== position) {
             console.log(`Set index to ${itemIndex}:${position}`);
             setMoveToIndex(itemIndex);
             setMoveToPosition(position);
 
-            setLastDropAt({ index: itemIndex, position });
+            setDropAt({ index: itemIndex, position });
         }
     }
 
     const handleDragOver = (itemIndex: number, position: DropPosition) => {
+        if (isItemBeingDragged(itemIndex)) {
+            return;
+        }
+
         updateDropAt(itemIndex, position);
 
         setDragHandledByChildSensors(true);
@@ -123,23 +115,17 @@ export const DraggableList: Component<Props> = (props: Props) => {
 
     const renderedItemsElements = createMemo(() => {
         const elements = listItemsElements();
-        const { index: dropIndex, position } = lastDropAt();
+        const { index: dropIndex } = dropAt();
+        console.log(`Current dropIndex: ${dropIndex}`);
 
         if (isDragInsideThisList()) {
-            console.log('Drag is inside the list');
+            const elementsCopy = elements.slice();
+            
+            const { index: lastDropAtIndex } = lastDropAt();
+            console.log(`Last dropIndex: ${lastDropAtIndex}`);
+            [elementsCopy[lastDropAtIndex], elementsCopy[dropIndex]] = [elementsCopy[dropIndex], elementsCopy[lastDropAtIndex]];
 
-            if (isDragBetweenElementsOfThisList()) {
-                const isDraggingBeforeDraggableElement = dropIndex === store.dragFromItemIndex && position === 'before';
-                const isDraggingAfterDraggableElement = dropIndex === store.dragFromItemIndex && position === 'after';
-                const isDraggingJustBeforeDraggableElement = dropIndex === (store.dragFromItemIndex - 1) && position === 'after';
-                const isDragginJustAfterDraggableElement = dropIndex === (store.dragFromItemIndex + 1) && position === 'before';
-
-                if (isDraggingBeforeDraggableElement || isDraggingAfterDraggableElement || isDraggingJustBeforeDraggableElement || isDragginJustAfterDraggableElement) {
-                    return elements;
-                }
-            }
-
-            return insertItemAt(elements.slice(), <div id="dropZone" style={dropZoneStyle()}></div>, dropIndex, position);
+            return elementsCopy;
         }
 
         return elements;
