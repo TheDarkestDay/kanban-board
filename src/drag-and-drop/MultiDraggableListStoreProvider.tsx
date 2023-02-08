@@ -12,10 +12,10 @@ type MultiDraggableListStore = {
     setDragFromListIndex: (index: number) => void,
     setDragToListIndex: (index: number) => void,
     setDragFromItemIndex: (index: number) => void,
-    setDraggableElementSizes: (width: number, height: number) => void;
     setDragInProgress: (value: boolean) => void;
     stopDrag: () => void;
     performDrag: (destinationIndex: number, position: DropPosition) => void;
+    setDraggableElement: (element: HTMLElement | null) => void;
 };
 
 const initialContextValue: MultiDraggableListStore = {
@@ -24,16 +24,15 @@ const initialContextValue: MultiDraggableListStore = {
         dragFromListIndex: 0,
         dragToListIndex: 0,
         dragFromItemIndex: 0,
-        draggableElementWidth: null,
-        draggableElementHeight: null,
         isDragInProgress: false,
+        draggableElement: null
     },
     setDragFromListIndex: () => {},
     setDragToListIndex: () => {},
     setDragFromItemIndex: () => {},
-    setDraggableElementSizes: () => {},
     setDragInProgress: () => {},
     stopDrag: () => {},
+    setDraggableElement: () => {},
     performDrag: () => {}
 };
 
@@ -45,8 +44,7 @@ type MultiDraggableListState = {
     dragFromListIndex: number;
     dragFromItemIndex: number;
     isDragInProgress: boolean;
-    draggableElementWidth: number | null;
-    draggableElementHeight: number | null;
+    draggableElement: HTMLElement | null;
 };
 
 export const insertItemAt = (itemsCopy: any[], itemToInsert: any, to: number, position: DropPosition) => {
@@ -75,9 +73,8 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
         dragToListIndex: -1,
         dragFromListIndex: -1,
         dragFromItemIndex: -1,
-        draggableElementHeight: null,
-        draggableElementWidth: null,
         isDragInProgress: false,
+        draggableElement: null,
     });
 
     const contextValue = {
@@ -91,9 +88,6 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
         setDragFromItemIndex(index: number) {
             setStore({dragFromItemIndex: index});
         },
-        setDraggableElementSizes(width: number, height: number) {
-            setStore({draggableElementWidth: width, draggableElementHeight: height});
-        },
         setDragInProgress(value: boolean) {
             setStore({isDragInProgress: value});
         },
@@ -104,8 +98,12 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
                     state.dragFromListIndex = -1;
                     state.dragToListIndex = -1;
                     state.isDragInProgress = false;
+                    state.draggableElement = null;
                 })
             )
+        },
+        setDraggableElement(draggableElement: HTMLElement | null) {
+            setStore({draggableElement});
         },
         performDrag(destinationIndex: number, position: DropPosition) {
             const { dragFromListIndex, dragFromItemIndex, dragToListIndex } = store;
@@ -124,6 +122,7 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
                     state.dragFromListIndex = -1;
                     state.dragToListIndex = -1;
                     state.isDragInProgress = false;
+                    state.draggableElement = null;
                 })
             );
         }
@@ -137,7 +136,7 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
 };
 
 export const useMultiDraggableListStore = () => {
-    const { store, stopDrag, setDragFromListIndex, setDragInProgress, setDragToListIndex, setDraggableElementSizes, setDragFromItemIndex, performDrag } = useContext(MultiDraggableListStoreContext);
+    const { store, stopDrag, setDragFromListIndex, setDragInProgress, setDraggableElement, setDragToListIndex, setDragFromItemIndex, performDrag } = useContext(MultiDraggableListStoreContext);
 
     return {
         store,
@@ -145,7 +144,7 @@ export const useMultiDraggableListStore = () => {
         setDragToListIndex,
         setDragInProgress,
         setDragFromItemIndex,
-        setDraggableElementSizes,
+        setDraggableElement,
         stopDrag,
         performDrag
     };

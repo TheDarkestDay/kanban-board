@@ -3,24 +3,15 @@ import { Component, JSX, JSXElement } from "solid-js";
 type Props = {
     children: JSXElement;
     style?: JSX.CSSProperties;
-    onDragStart: (width: number, height: number) => void;
+    onDragStart: () => void;
     onDragEnd: () => void;
 };
 
 export const Draggable: Component<Props> = (props: Props) => {
-    let rootElement: HTMLDivElement | undefined;
-
     const handleDragStart = (event: DragEvent) => {
-        if (rootElement == null) {
-            return;
-        }
-
         event.dataTransfer?.setData('text/plain', '0');
 
-        props.onDragStart(
-            rootElement.offsetWidth,
-            rootElement.offsetHeight
-        );
+        props.onDragStart();
     };
 
     const handleDragEnd = () => {
@@ -28,7 +19,7 @@ export const Draggable: Component<Props> = (props: Props) => {
     };
 
     return (
-        <div ref={rootElement} style={props.style} draggable={true} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div style={props.style} draggable={true} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
             {props.children}
         </div>
     );
