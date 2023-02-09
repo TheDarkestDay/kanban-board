@@ -14,7 +14,7 @@ type Props = {
 };
 
 type DropAt = {
-    index: number;
+    itemId: string;
     position: DropPosition;
 };
 
@@ -23,7 +23,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
     const [moveToIndex, setMoveToIndex] = createSignal(-1);
     const [moveToPosition, setMoveToPosition] = createSignal<DropPosition>('before');
     const [lastDropAt, setLastDropAt] = createSignal<DropAt>({
-        index: -1,
+        itemId: '',
         position: 'before'
     });
     const [isDragHandledByChildSensors, setDragHandledByChildSensors] = createSignal(false);
@@ -38,50 +38,50 @@ export const DraggableList: Component<Props> = (props: Props) => {
     });
 
     createEffect(() => {
-        const { index: dropIndex } = lastDropAt();
+        const { itemId } = lastDropAt();
 
         setOrderedElementIds((currentOrder) => {
             const currentOrderCopy = currentOrder.slice();
             const currentDraggableElementIndex = currentOrderCopy.findIndex((id) => id === store.draggableElement!.id) ?? 0;
+            const dropAtElementIndex = currentOrderCopy.findIndex((id) => id === itemId);
 
-            [currentOrderCopy[currentDraggableElementIndex], currentOrderCopy[dropIndex]] = [currentOrderCopy[dropIndex], currentOrderCopy[currentDraggableElementIndex]];
+            [currentOrderCopy[currentDraggableElementIndex], currentOrderCopy[dropAtElementIndex]] = [currentOrderCopy[dropAtElementIndex], currentOrderCopy[currentDraggableElementIndex]];
 
             return currentOrderCopy;
         });
     });
 
-    const handleDragStart = (itemIndex: number) => {
+    const handleDragStart = (itemId: string) => {
         const elements = listItemsDomElements() as HTMLElement[];
+        const draggableElement = elements.find((element) => element.id === itemId);
 
-        setDragFromItemIndex(itemIndex);
         setDragFromListIndex(props.index);
         setLastDropAt({
-            index: itemIndex,
+            itemId,
             position: 'before'
         });
-        setDraggableElement(elements[itemIndex]);
+        setDraggableElement(draggableElement!);
         setDragInProgress(true);
         setOrderedElementIds(store.itemsLists[props.index].map((item) => item.id));
     };
 
-    const updateDropAt = (itemIndex: number, position: DropPosition) => {
-        const { index, position: lastTrackedPosition } = lastDropAt();
+    const updateDropAt = (itemId: string, position: DropPosition) => {
+        const { itemId: lastItemId, position: lastTrackedPosition } = lastDropAt();
 
-        if (index !== itemIndex || lastTrackedPosition !== position) {
-            console.log(`Set index to ${itemIndex}:${position} BLABLABLALBALBALBALB`);
-            setMoveToIndex(itemIndex);
+        if (itemId !== lastItemId || lastTrackedPosition !== position) {
+            setMoveToIndex(0);
             setMoveToPosition(position);
 
-            setLastDropAt({ index: itemIndex, position });
+            setLastDropAt({ itemId, position });
         }
     }
 
-    const handleDragOver = (itemIndex: number, position: DropPosition) => {
-        if (isItemBeingDragged(itemIndex)) {
+    const handleDragOver = (itemId: string, position: DropPosition) => {
+        if (isItemBeingDragged(itemId)) {
             return;
         }
 
-        updateDropAt(itemIndex, position);
+        updateDropAt(itemId, position);
 
         setDragHandledByChildSensors(true);
         setDragToListIndex(props.index);
@@ -123,14 +123,14 @@ export const DraggableList: Component<Props> = (props: Props) => {
         setMoveToPosition('after');
     };
 
-    const isItemBeingDragged = (itemIndex: number) => {
-        return store.dragFromListIndex === props.index && itemIndex === store.dragFromItemIndex;
+    const isItemBeingDragged = (itemId: string) => {
+        return store.dragFromListIndex === props.index && itemId === store.draggableElement?.id;
     };
 
     const listItemsElements = createMemo(() => {
         return store.itemsLists[props.index].map((item, itemIndex) => {
-            return <DragOverSensor style={{transition: 'transform .25s'}} id={item.id} component="li" direction={props.direction} onDragOver={(position) => handleDragOver(itemIndex, position)}>
-                <Draggable style={{opacity: isItemBeingDragged(itemIndex) ? 0.5 : 1}} onDragStart={() => handleDragStart(itemIndex)} onDragEnd={handleDragEnd}>
+            return <DragOverSensor style={{transition: 'transform .25s'}} id={item.id} component="li" direction={props.direction} onDragOver={(position) => handleDragOver(item.id, position)}>
+                <Draggable style={{opacity: isItemBeingDragged(item.id) ? 0.5 : 1}} onDragStart={() => handleDragStart(item.id)} onDragEnd={handleDragEnd}>
                     <props.ItemComponent {...item} />
                 </Draggable>
             </DragOverSensor>;
