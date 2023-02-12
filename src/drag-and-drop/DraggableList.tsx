@@ -29,7 +29,6 @@ export const DraggableList: Component<Props> = (props: Props) => {
     const [isDragHandledByChildSensors, setDragHandledByChildSensors] = createSignal(false);
     const isDragInsideThisList = createMemo(() => store.dragToListIndex === props.index);
     const [orderedElementIds, setOrderedElementIds] = createSignal<string[]>([]);
-    const isDragBetweenElementsOfThisList = createMemo(() => isDragInsideThisList() && store.dragFromListIndex === props.index);
 
     createEffect(() => {
         if (!isDragInsideThisList()) {
@@ -42,8 +41,10 @@ export const DraggableList: Component<Props> = (props: Props) => {
 
         setOrderedElementIds((currentOrder) => {
             const currentOrderCopy = currentOrder.slice();
-            const currentDraggableElementIndex = currentOrderCopy.findIndex((id) => id === store.draggableElement!.id) ?? 0;
+            console.log(`Swapping between ${itemId} and ${store.draggableElement?.id}`);
+            const currentDraggableElementIndex = currentOrderCopy.findIndex((id) => id === store.draggableElement?.id) ?? 0;
             const dropAtElementIndex = currentOrderCopy.findIndex((id) => id === itemId);
+            console.log(`They are at ${dropAtElementIndex} and ${currentDraggableElementIndex}`);
 
             [currentOrderCopy[currentDraggableElementIndex], currentOrderCopy[dropAtElementIndex]] = [currentOrderCopy[dropAtElementIndex], currentOrderCopy[currentDraggableElementIndex]];
 
@@ -68,11 +69,14 @@ export const DraggableList: Component<Props> = (props: Props) => {
     const updateDropAt = (itemId: string, position: DropPosition) => {
         const { itemId: lastItemId, position: lastTrackedPosition } = lastDropAt();
 
-        if (itemId !== lastItemId || lastTrackedPosition !== position) {
-            setMoveToIndex(0);
-            setMoveToPosition(position);
+        setMoveToIndex(0);
+        setMoveToPosition(position);
 
-            setLastDropAt({ itemId, position });
+        console.log(`Setting dropAt to`, {itemId, position});
+        setLastDropAt({ itemId, position });
+
+        if (itemId !== lastItemId || lastTrackedPosition !== position) {
+            
         }
     }
 

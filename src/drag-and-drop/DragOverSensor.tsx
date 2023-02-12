@@ -1,5 +1,6 @@
-import type { Component, JSXElement, JSX } from 'solid-js';
+import { Component, JSXElement, JSX, createSignal } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
+import { useMultiDraggableListStore } from './MultiDraggableListStoreProvider';
 
 import { DropPosition, ListDirection } from './types';
 
@@ -15,6 +16,10 @@ type Props = {
 
 export const DragOverSensor: Component<Props> = (props: Props) => {
     let rootElement: HTMLDivElement | undefined;
+
+    const { pointerMovementDirection } = useMultiDraggableListStore();
+
+    const [isDragOverHandled, setDragOverHandled] = createSignal(false);
 
     const { direction, onDragOver, component } = props;
 
@@ -33,12 +38,19 @@ export const DragOverSensor: Component<Props> = (props: Props) => {
         const pointerX = event.clientX;
         const pointerY = event.clientY;
 
-        const isBeyondMedian = direction === 'inline' ? pointerX > medianX : pointerY > medianY;
+        const [ currentPointerPosition, threshold ] = direction === 'inline' ? [pointerX, medianX] : [pointerY, medianY];
+
+        const pointerDirection = pointerMovementDirection();
+        console.log(`Got direction: ${pointerDirection}`);
+        const isBeyondMedian = pointerDirection === 'forward' ? currentPointerPosition > threshold : currentPointerPosition < threshold;
 
         if (isBeyondMedian) {
-            onDragOver('after');
+            if (!isDragOverHandled()) {
+                onDragOver('after');
+                setDragOverHandled(true);
+            }
         } else {
-            onDragOver('before');
+            setDragOverHandled(false);
         }
     };
 
