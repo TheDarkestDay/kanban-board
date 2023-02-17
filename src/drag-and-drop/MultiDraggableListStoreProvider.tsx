@@ -1,7 +1,6 @@
-import { Accessor, Component, createContext, JSXElement, useContext } from "solid-js";
+import { Component, createContext, JSXElement, useContext } from "solid-js";
 import { createStore, produce } from "solid-js/store";
 import { DropPosition, ListDirection } from "./types";
-import { usePointerMovementDirection } from "./use-pointer-movement-direction";
 
 type Props = {
     children: JSXElement;
@@ -11,7 +10,6 @@ type Props = {
 
 type MultiDraggableListStore = {
     store: MultiDraggableListState;
-    pointerMovementDirection: Accessor<'forward' | 'backward'>;
     setDragFromListIndex: (index: number) => void,
     setDragToListIndex: (index: number) => void,
     setDragFromItemIndex: (index: number) => void,
@@ -30,7 +28,6 @@ const initialContextValue: MultiDraggableListStore = {
         isDragInProgress: false,
         draggableElement: null
     },
-    pointerMovementDirection: () => 'forward',
     setDragFromListIndex: () => {},
     setDragToListIndex: () => {},
     setDragFromItemIndex: () => {},
@@ -81,11 +78,8 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
         draggableElement: null,
     });
 
-    const pointerMovementDirection = usePointerMovementDirection(props.direction, true);    
-
     const contextValue = {
         store,
-        pointerMovementDirection,
         setDragFromListIndex(index: number) {
             setStore({dragFromListIndex: index});
         },
@@ -143,7 +137,7 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
 };
 
 export const useMultiDraggableListStore = () => {
-    const { store, stopDrag, pointerMovementDirection, setDragFromListIndex, setDragInProgress, setDraggableElement, setDragToListIndex, setDragFromItemIndex, performDrag } = useContext(MultiDraggableListStoreContext);
+    const { store, stopDrag, setDragFromListIndex, setDragInProgress, setDraggableElement, setDragToListIndex, setDragFromItemIndex, performDrag } = useContext(MultiDraggableListStoreContext);
 
     return {
         store,
@@ -152,7 +146,6 @@ export const useMultiDraggableListStore = () => {
         setDragInProgress,
         setDragFromItemIndex,
         setDraggableElement,
-        pointerMovementDirection,
         stopDrag,
         performDrag
     };

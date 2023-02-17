@@ -1,8 +1,9 @@
 import { Component, JSXElement, JSX, createSignal } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
-import { useMultiDraggableListStore } from './MultiDraggableListStoreProvider';
 
 import { DropPosition, ListDirection } from './types';
+
+export type DragOverAnticipationPosition = 'before' | 'after';
 
 type Props = {
     children: JSXElement;
@@ -11,17 +12,17 @@ type Props = {
     style?: JSX.CSSProperties | string;
     onTransitionEnd?: () => void;
     onDragOver: (position: DropPosition) => void;
+    waitForDragOverFrom: 'after' | 'before';
     direction: ListDirection;
 };
 
 export const DragOverSensor: Component<Props> = (props: Props) => {
     let rootElement: HTMLDivElement | undefined;
 
-    const { pointerMovementDirection } = useMultiDraggableListStore();
-
     const [isDragOverHandled, setDragOverHandled] = createSignal(false);
 
     const { direction, onDragOver, component } = props;
+
 
     const handleDragOver = (event: DragEvent) => {
         event.preventDefault();
@@ -40,9 +41,7 @@ export const DragOverSensor: Component<Props> = (props: Props) => {
 
         const [ currentPointerPosition, threshold ] = direction === 'inline' ? [pointerX, medianX] : [pointerY, medianY];
 
-        const pointerDirection = pointerMovementDirection();
-        console.log(`Got direction: ${pointerDirection}`);
-        const isBeyondMedian = pointerDirection === 'forward' ? currentPointerPosition > threshold : currentPointerPosition < threshold;
+        const isBeyondMedian = props.waitForDragOverFrom === 'before' ? currentPointerPosition >= threshold : currentPointerPosition < threshold;
 
         if (isBeyondMedian) {
             if (!isDragOverHandled()) {

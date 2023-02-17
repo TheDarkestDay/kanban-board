@@ -1,4 +1,4 @@
-import { children, Component, createEffect, createMemo, createSignal, JSXElement } from "solid-js";
+import { children, Component, createEffect, createMemo, createSignal } from "solid-js";
 import { AnimatableList } from "./AnimatableList";
 import { Draggable } from "./Draggable";
 import { DragOverSensor } from "./DragOverSensor";
@@ -19,7 +19,7 @@ type DropAt = {
 };
 
 export const DraggableList: Component<Props> = (props: Props) => {
-    const { store, setDragFromListIndex, stopDrag, setDragInProgress, setDraggableElement, setDragFromItemIndex, setDragToListIndex, performDrag } = useMultiDraggableListStore();
+    const { store, setDragFromListIndex, stopDrag, setDragInProgress, setDraggableElement, setDragToListIndex, performDrag } = useMultiDraggableListStore();
     const [moveToIndex, setMoveToIndex] = createSignal(-1);
     const [moveToPosition, setMoveToPosition] = createSignal<DropPosition>('before');
     const [lastDropAt, setLastDropAt] = createSignal<DropAt>({
@@ -41,10 +41,8 @@ export const DraggableList: Component<Props> = (props: Props) => {
 
         setOrderedElementIds((currentOrder) => {
             const currentOrderCopy = currentOrder.slice();
-            console.log(`Swapping between ${itemId} and ${store.draggableElement?.id}`);
             const currentDraggableElementIndex = currentOrderCopy.findIndex((id) => id === store.draggableElement?.id) ?? 0;
             const dropAtElementIndex = currentOrderCopy.findIndex((id) => id === itemId);
-            console.log(`They are at ${dropAtElementIndex} and ${currentDraggableElementIndex}`);
 
             [currentOrderCopy[currentDraggableElementIndex], currentOrderCopy[dropAtElementIndex]] = [currentOrderCopy[dropAtElementIndex], currentOrderCopy[currentDraggableElementIndex]];
 
@@ -72,7 +70,6 @@ export const DraggableList: Component<Props> = (props: Props) => {
         setMoveToIndex(0);
         setMoveToPosition(position);
 
-        console.log(`Setting dropAt to`, {itemId, position});
         setLastDropAt({ itemId, position });
 
         if (itemId !== lastItemId || lastTrackedPosition !== position) {
@@ -131,9 +128,23 @@ export const DraggableList: Component<Props> = (props: Props) => {
         return store.dragFromListIndex === props.index && itemId === store.draggableElement?.id;
     };
 
+    const getDragOverAnticipationPosition = (itemId: string) => {
+        if (store.draggableElement == null) {
+            return "after";
+        }
+
+        const currentOrderOfIds = orderedElementIds();
+        const itemIdIndex = currentOrderOfIds.findIndex((id) => id === itemId);
+        const draggableItemIdIndex = currentOrderOfIds.findIndex((id) => id === store.draggableElement!.id);
+
+        console.log(`${itemId} expects drag from `, draggableItemIdIndex > itemIdIndex ? "after" : "before");
+
+        return draggableItemIdIndex > itemIdIndex ? "after" : "before";
+    };
+
     const listItemsElements = createMemo(() => {
         return store.itemsLists[props.index].map((item, itemIndex) => {
-            return <DragOverSensor style={{transition: 'transform .25s'}} id={item.id} component="li" direction={props.direction} onDragOver={(position) => handleDragOver(item.id, position)}>
+            return <DragOverSensor style={{transition: 'transform .25s'}} waitForDragOverFrom={getDragOverAnticipationPosition(item.id)} id={item.id} component="li" direction={props.direction} onDragOver={(position) => handleDragOver(item.id, position)}>
                 <Draggable style={{opacity: isItemBeingDragged(item.id) ? 0.5 : 1}} onDragStart={() => handleDragStart(item.id)} onDragEnd={handleDragEnd}>
                     <props.ItemComponent {...item} />
                 </Draggable>
