@@ -13,12 +13,20 @@ type Props = {
     ItemComponent: Component<any>;
 };
 
+type DropAt = {
+    itemId: string | null;
+};
+
 export const DraggableList: Component<Props> = (props: Props) => {
     const { store, setDragFromListIndex, stopDrag, setDragInProgress, setDraggableElement, setDragToListIndex, performDrag } = useMultiDraggableListStore();
-    const [dropAtItemId, setDropAtItemId] = createSignal<string | null>(null);
+    const [dropAtItemId, setDropAtItemId] = createSignal<DropAt>({
+        itemId: null
+    });
     const [isDragHandledByChildSensors, setDragHandledByChildSensors] = createSignal(false);
     const isDragInsideThisList = createMemo(() => store.dragToListIndex === props.index);
-    const [orderedElementIds, setOrderedElementIds] = createSignal<string[]>([]);
+    const [orderedElementIds, setOrderedElementIds] = createSignal<string[]>(
+        store.itemsLists[props.index].map((item) => item.id)
+    );
 
     createEffect(() => {
         if (!isDragInsideThisList()) {
@@ -27,14 +35,22 @@ export const DraggableList: Component<Props> = (props: Props) => {
     });
 
     createEffect(() => {
-        const itemId = dropAtItemId();
+        const { itemId } = dropAtItemId();
+
+        if (store.draggableElement == null || itemId == null) {
+            return;
+        }
 
         setOrderedElementIds((currentOrder) => {
             const currentOrderCopy = currentOrder.slice();
             const currentDraggableElementIndex = currentOrderCopy.findIndex((id) => id === store.draggableElement?.id) ?? 0;
             const dropAtElementIndex = currentOrderCopy.findIndex((id) => id === itemId);
 
-            [currentOrderCopy[currentDraggableElementIndex], currentOrderCopy[dropAtElementIndex]] = [currentOrderCopy[dropAtElementIndex], currentOrderCopy[currentDraggableElementIndex]];
+            if (currentDraggableElementIndex === -1) {
+                currentOrderCopy.splice(dropAtElementIndex, 0, store.draggableElement!.id);
+            } else {
+                [currentOrderCopy[currentDraggableElementIndex], currentOrderCopy[dropAtElementIndex]] = [currentOrderCopy[dropAtElementIndex], currentOrderCopy[currentDraggableElementIndex]];
+            }
 
             return currentOrderCopy;
         });
@@ -45,7 +61,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
         const draggableElement = elements.find((element) => element.id === itemId);
 
         setDragFromListIndex(props.index);
-        setDropAtItemId(draggableElement!.id);
+        setDropAtItemId({itemId: draggableElement!.id});
         setDraggableElement(draggableElement!);
         setDragInProgress(true);
         setOrderedElementIds(store.itemsLists[props.index].map((item) => item.id));
@@ -56,7 +72,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
             return;
         }
 
-        setDropAtItemId(itemId);
+        setDropAtItemId({itemId});
 
         setDragHandledByChildSensors(true);
         setDragToListIndex(props.index);
@@ -64,7 +80,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
 
     const handleDragEnd = () => {
         console.log('Drag ended');
-        setDropAtItemId(null);
+        setDropAtItemId({itemId: null});
         stopDrag();
     };
 
@@ -82,7 +98,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
             performDrag(currentElementIds);
         }
 
-        setDropAtItemId(null);
+        setDropAtItemId({itemId: null});
     };
 
     const handleListDragEnter = () => {
@@ -99,12 +115,16 @@ export const DraggableList: Component<Props> = (props: Props) => {
 
     const getDragOverAnticipationPosition = (itemId: string) => {
         if (store.draggableElement == null) {
-            return "after";
+            return "before";
         }
 
         const currentOrderOfIds = orderedElementIds();
         const itemIdIndex = currentOrderOfIds.findIndex((id) => id === itemId);
         const draggableItemIdIndex = currentOrderOfIds.findIndex((id) => id === store.draggableElement!.id);
+
+        if (draggableItemIdIndex === -1) {
+            return "before";
+        }
 
         return draggableItemIdIndex > itemIdIndex ? "after" : "before";
     };
@@ -129,6 +149,10 @@ export const DraggableList: Component<Props> = (props: Props) => {
             
             return currentOrderOfIds.map((elementId) => {
                 const element = elements.find((itemElement) => itemElement.id === elementId);
+
+                if (element == null) {
+                    return store.draggableElement;
+                }
 
                 return element;
             });
