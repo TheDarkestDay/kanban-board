@@ -1,7 +1,7 @@
 import { Component, JSXElement, JSX, createSignal } from 'solid-js';
 import { Dynamic } from 'solid-js/web';
 
-import { DropPosition, ListDirection } from './types';
+import { ListDirection } from './types';
 
 export type DragOverAnticipationPosition = 'before' | 'after';
 
@@ -11,7 +11,7 @@ type Props = {
     component?: string;
     style?: JSX.CSSProperties | string;
     onTransitionEnd?: () => void;
-    onDragOver: (position: DropPosition) => void;
+    onDragOver: () => void;
     waitForDragOverFrom: 'after' | 'before';
     direction: ListDirection;
 };
@@ -45,7 +45,7 @@ export const DragOverSensor: Component<Props> = (props: Props) => {
 
         if (isBeyondMedian) {
             if (!isDragOverHandled()) {
-                onDragOver('after');
+                onDragOver();
                 setDragOverHandled(true);
             }
         } else {

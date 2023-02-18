@@ -1,6 +1,6 @@
 import { Component, createContext, JSXElement, useContext } from "solid-js";
 import { createStore, produce } from "solid-js/store";
-import { DropPosition, ListDirection } from "./types";
+import { ListDirection } from "./types";
 
 type Props = {
     children: JSXElement;
@@ -15,7 +15,7 @@ type MultiDraggableListStore = {
     setDragFromItemIndex: (index: number) => void,
     setDragInProgress: (value: boolean) => void;
     stopDrag: () => void;
-    performDrag: (destinationIndex: number, position: DropPosition) => void;
+    performDrag: (orderedItemIds: string[]) => void;
     setDraggableElement: (element: HTMLElement | null) => void;
 };
 
@@ -48,22 +48,20 @@ type MultiDraggableListState = {
     draggableElement: HTMLElement | null;
 };
 
-export const insertItemAt = (itemsCopy: any[], itemToInsert: any, to: number, position: DropPosition) => {
-    const positionAwareIndex = position === 'before' ? to : to + 1;
-
-    itemsCopy.splice(positionAwareIndex, 0, itemToInsert);
+export const insertItemAt = (itemsCopy: any[], itemToInsert: any, to: number) => {
+    itemsCopy.splice(to, 0, itemToInsert);
 
     return itemsCopy;
 };
 
-export const dragItemByIndex = (items: any[], from: number, to: number, position: DropPosition) => {
+export const dragItemByIndex = (items: any[], from: number, to: number) => {
     const result = items.slice();
 
     const [elementToMove] = result.splice(from, 1);
     const indexDelta = to - from;
     const insertionIndex = indexDelta > 0 ? to - 1 : to;
 
-    insertItemAt(result, elementToMove, insertionIndex, position);
+    insertItemAt(result, elementToMove, insertionIndex);
 
     return result;
 };
@@ -106,7 +104,7 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
         setDraggableElement(draggableElement: HTMLElement | null) {
             setStore({draggableElement});
         },
-        performDrag(destinationIndex: number, position: DropPosition) {
+        performDrag(orderedItemIds: string[]) {
             const { dragFromListIndex, dragFromItemIndex, dragToListIndex } = store;
 
             setStore(
@@ -114,9 +112,13 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
                     if (dragFromListIndex !== dragToListIndex) {
                         const [itemToMove] = state.itemsLists[dragFromListIndex].splice(dragFromItemIndex, 1);
 
-                        insertItemAt(state.itemsLists[dragToListIndex], itemToMove, destinationIndex, position);
+                        insertItemAt(state.itemsLists[dragToListIndex], itemToMove, 0);
                     } else {
-                        state.itemsLists[dragToListIndex] = dragItemByIndex(state.itemsLists[dragToListIndex], dragFromItemIndex, destinationIndex, position);
+                        state.itemsLists[state.dragFromListIndex] = orderedItemIds.map((id) => {
+                            const item = state.itemsLists[store.dragFromListIndex].find((item) => item.id === id);
+
+                            return item;
+                        });
                     }
 
                     state.dragFromItemIndex = -1;

@@ -4,7 +4,7 @@ import { Draggable } from "./Draggable";
 import { DragOverSensor } from "./DragOverSensor";
 import { DropTarget } from "./DropTarget";
 import { useMultiDraggableListStore } from "./MultiDraggableListStoreProvider";
-import { DropPosition, ListDirection } from "./types";
+import { ListDirection } from "./types";
 
 type Props = {
     class?: string;
@@ -13,19 +13,9 @@ type Props = {
     ItemComponent: Component<any>;
 };
 
-type DropAt = {
-    itemId: string;
-    position: DropPosition;
-};
-
 export const DraggableList: Component<Props> = (props: Props) => {
     const { store, setDragFromListIndex, stopDrag, setDragInProgress, setDraggableElement, setDragToListIndex, performDrag } = useMultiDraggableListStore();
-    const [moveToIndex, setMoveToIndex] = createSignal(-1);
-    const [moveToPosition, setMoveToPosition] = createSignal<DropPosition>('before');
-    const [lastDropAt, setLastDropAt] = createSignal<DropAt>({
-        itemId: '',
-        position: 'before'
-    });
+    const [dropAtItemId, setDropAtItemId] = createSignal<string | null>(null);
     const [isDragHandledByChildSensors, setDragHandledByChildSensors] = createSignal(false);
     const isDragInsideThisList = createMemo(() => store.dragToListIndex === props.index);
     const [orderedElementIds, setOrderedElementIds] = createSignal<string[]>([]);
@@ -37,7 +27,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
     });
 
     createEffect(() => {
-        const { itemId } = lastDropAt();
+        const itemId = dropAtItemId();
 
         setOrderedElementIds((currentOrder) => {
             const currentOrderCopy = currentOrder.slice();
@@ -55,34 +45,18 @@ export const DraggableList: Component<Props> = (props: Props) => {
         const draggableElement = elements.find((element) => element.id === itemId);
 
         setDragFromListIndex(props.index);
-        setLastDropAt({
-            itemId,
-            position: 'before'
-        });
+        setDropAtItemId(draggableElement!.id);
         setDraggableElement(draggableElement!);
         setDragInProgress(true);
         setOrderedElementIds(store.itemsLists[props.index].map((item) => item.id));
     };
 
-    const updateDropAt = (itemId: string, position: DropPosition) => {
-        const { itemId: lastItemId, position: lastTrackedPosition } = lastDropAt();
-
-        setMoveToIndex(0);
-        setMoveToPosition(position);
-
-        setLastDropAt({ itemId, position });
-
-        if (itemId !== lastItemId || lastTrackedPosition !== position) {
-            
-        }
-    }
-
-    const handleDragOver = (itemId: string, position: DropPosition) => {
+    const handleDragOver = (itemId: string) => {
         if (isItemBeingDragged(itemId)) {
             return;
         }
 
-        updateDropAt(itemId, position);
+        setDropAtItemId(itemId);
 
         setDragHandledByChildSensors(true);
         setDragToListIndex(props.index);
@@ -90,7 +64,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
 
     const handleDragEnd = () => {
         console.log('Drag ended');
-        setMoveToIndex(-1);
+        setDropAtItemId(null);
         stopDrag();
     };
 
@@ -98,18 +72,17 @@ export const DraggableList: Component<Props> = (props: Props) => {
         console.log('Dropped');
         const lastRecordedMoveToList = store.dragToListIndex;
 
+        const currentElementIds = orderedElementIds();
+
         if (lastRecordedMoveToList !== props.index) {
             setDragToListIndex(props.index);
 
-            performDrag(store.itemsLists[props.index].length - 1, 'after');
+            performDrag(currentElementIds);
         } else {
-            const to = moveToIndex();
-            const position = moveToPosition();
-
-            performDrag(to, position);
+            performDrag(currentElementIds);
         }
 
-        setMoveToIndex(-1);
+        setDropAtItemId(null);
     };
 
     const handleListDragEnter = () => {
@@ -117,11 +90,7 @@ export const DraggableList: Component<Props> = (props: Props) => {
             return;
         }
 
-        setMoveToIndex(
-            Math.max(0, store.itemsLists[props.index].length - 1),
-        );
         setDragToListIndex(props.index);
-        setMoveToPosition('after');
     };
 
     const isItemBeingDragged = (itemId: string) => {
@@ -137,14 +106,12 @@ export const DraggableList: Component<Props> = (props: Props) => {
         const itemIdIndex = currentOrderOfIds.findIndex((id) => id === itemId);
         const draggableItemIdIndex = currentOrderOfIds.findIndex((id) => id === store.draggableElement!.id);
 
-        console.log(`${itemId} expects drag from `, draggableItemIdIndex > itemIdIndex ? "after" : "before");
-
         return draggableItemIdIndex > itemIdIndex ? "after" : "before";
     };
 
     const listItemsElements = createMemo(() => {
-        return store.itemsLists[props.index].map((item, itemIndex) => {
-            return <DragOverSensor style={{transition: 'transform .25s'}} waitForDragOverFrom={getDragOverAnticipationPosition(item.id)} id={item.id} component="li" direction={props.direction} onDragOver={(position) => handleDragOver(item.id, position)}>
+        return store.itemsLists[props.index].map((item) => {
+            return <DragOverSensor style={{transition: 'transform .25s'}} waitForDragOverFrom={getDragOverAnticipationPosition(item.id)} id={item.id} component="li" direction={props.direction} onDragOver={() => handleDragOver(item.id)}>
                 <Draggable style={{opacity: isItemBeingDragged(item.id) ? 0.5 : 1}} onDragStart={() => handleDragStart(item.id)} onDragEnd={handleDragEnd}>
                     <props.ItemComponent {...item} />
                 </Draggable>
