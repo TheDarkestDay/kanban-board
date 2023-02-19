@@ -12,7 +12,6 @@ type MultiDraggableListStore = {
     store: MultiDraggableListState;
     setDragFromListIndex: (index: number) => void,
     setDragToListIndex: (index: number) => void,
-    setDragFromItemIndex: (index: number) => void,
     setDragInProgress: (value: boolean) => void;
     stopDrag: () => void;
     performDrag: (orderedItemIds: string[]) => void;
@@ -30,7 +29,6 @@ const initialContextValue: MultiDraggableListStore = {
     },
     setDragFromListIndex: () => {},
     setDragToListIndex: () => {},
-    setDragFromItemIndex: () => {},
     setDragInProgress: () => {},
     stopDrag: () => {},
     setDraggableElement: () => {},
@@ -105,14 +103,23 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
             setStore({draggableElement});
         },
         performDrag(orderedItemIds: string[]) {
-            const { dragFromListIndex, dragFromItemIndex, dragToListIndex } = store;
-
             setStore(
                 produce((state) => {
-                    if (dragFromListIndex !== dragToListIndex) {
-                        const [itemToMove] = state.itemsLists[dragFromListIndex].splice(dragFromItemIndex, 1);
+                    const { dragFromListIndex, dragToListIndex, draggableElement } = state;
 
-                        insertItemAt(state.itemsLists[dragToListIndex], itemToMove, 0);
+                    if (dragFromListIndex !== dragToListIndex) {
+                        const itemToMoveIndex = state.itemsLists[dragFromListIndex].findIndex((item) => item.id === draggableElement!.id);
+                        const [itemToMove] = state.itemsLists[dragFromListIndex].splice(itemToMoveIndex, 1);
+
+                        state.itemsLists[state.dragToListIndex] = orderedItemIds.map((id) => {
+                            const item = state.itemsLists[store.dragToListIndex].find((item) => item.id === id);
+
+                            if (item == null) {
+                                return itemToMove;
+                            }
+
+                            return item;
+                        });
                     } else {
                         state.itemsLists[state.dragFromListIndex] = orderedItemIds.map((id) => {
                             const item = state.itemsLists[store.dragFromListIndex].find((item) => item.id === id);
@@ -139,14 +146,13 @@ export const MultiDraggableListStoreProvider: Component<Props> = (props: Props) 
 };
 
 export const useMultiDraggableListStore = () => {
-    const { store, stopDrag, setDragFromListIndex, setDragInProgress, setDraggableElement, setDragToListIndex, setDragFromItemIndex, performDrag } = useContext(MultiDraggableListStoreContext);
+    const { store, stopDrag, setDragFromListIndex, setDragInProgress, setDraggableElement, setDragToListIndex, performDrag } = useContext(MultiDraggableListStoreContext);
 
     return {
         store,
         setDragFromListIndex,
         setDragToListIndex,
         setDragInProgress,
-        setDragFromItemIndex,
         setDraggableElement,
         stopDrag,
         performDrag

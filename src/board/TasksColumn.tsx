@@ -1,4 +1,4 @@
-import { Component, onMount } from "solid-js";
+import { Component } from "solid-js";
 import classNames from 'classnames';
 
 import { Column } from "./domain";
@@ -15,12 +15,12 @@ type Props = {
     column: Column
 };
 
-export const TasksColumn: Component<Props> = ({ column, index }: Props) => {
+export const TasksColumn: Component<Props> = (props: Props) => {
     const { store } = useMultiDraggableListStore();
 
-    const { name, badgeColor } = column;
+    const { name, badgeColor } = props.column;
 
-    const tasks = store.itemsLists[index] ?? [];
+    const tasks = store.itemsLists[props.index] ?? [];
 
     const badgeColorStyle = {
         '--badge-color': badgeColor
@@ -32,7 +32,7 @@ export const TasksColumn: Component<Props> = ({ column, index }: Props) => {
                 {name} ({tasks.length})
             </h2>
 
-            <DraggableList index={index} direction="block" class={styles.tasksList} ItemComponent={TaskCard} />
+            <DraggableList index={props.index} direction="block" class={styles.tasksList} ItemComponent={TaskCard} />
         </div>
     );
 };
