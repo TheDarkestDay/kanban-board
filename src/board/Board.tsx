@@ -1,5 +1,5 @@
 import { Component, createSignal, For } from 'solid-js';
-import { MultiDraggableListStoreContext, MultiDraggableListStoreProvider } from '../drag-and-drop/MultiDraggableListStoreProvider';
+import { MultiDraggableListStoreProvider } from '../drag-and-drop/MultiDraggableListStoreProvider';
 
 import styles from './Board.module.css';
 import { Column } from './domain';
@@ -79,7 +79,7 @@ export const Board: Component = () => {
 
     return (
         <main class={styles.main}>
-            <MultiDraggableListStoreProvider data={tasks}>
+            <MultiDraggableListStoreProvider direction="block" data={tasks}>
                 <For each={columns()}>
                     {(column, index) => <TasksColumn index={index()} column={column} />}
                 </For>

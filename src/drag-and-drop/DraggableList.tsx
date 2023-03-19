@@ -34,6 +34,10 @@ export const DraggableList: Component<Props> = (props: Props) => {
         }
     });
 
+    const isElementDraggedOutsideOfThisList = createMemo(() => {
+        return store.dragFromListIndex === props.index && store.dragToListIndex !== props.index;
+    });
+
     createEffect(() => {
         const { itemId } = dropAtItemId();
 
@@ -46,7 +50,9 @@ export const DraggableList: Component<Props> = (props: Props) => {
             const currentDraggableElementIndex = currentOrderCopy.findIndex((id) => id === store.draggableElement?.id) ?? 0;
             const dropAtElementIndex = currentOrderCopy.findIndex((id) => id === itemId);
 
-            if (currentDraggableElementIndex === -1) {
+            if (isElementDraggedOutsideOfThisList()) {
+                currentOrderCopy.splice(currentDraggableElementIndex, 1);
+            } else if (currentDraggableElementIndex === -1) {
                 currentOrderCopy.splice(dropAtElementIndex, 0, store.draggableElement!.id);
             } else {
                 [currentOrderCopy[currentDraggableElementIndex], currentOrderCopy[dropAtElementIndex]] = [currentOrderCopy[dropAtElementIndex], currentOrderCopy[currentDraggableElementIndex]];

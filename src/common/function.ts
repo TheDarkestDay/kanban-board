@@ -1,12 +1,12 @@
-export const debounce = (fn: (...args: any[]) => void, durationMs: number) => {
+export const debounce = <CallbackArguments extends any[]>(fn: (...args: CallbackArguments) => void, durationMs: number) => {
     let timeoutHandle: NodeJS.Timeout | null = null;
 
-    return () => {
+    return (...args: CallbackArguments) => {
         if (timeoutHandle != null) {
             clearTimeout(timeoutHandle);
             timeoutHandle = null;
         }
 
-        timeoutHandle = setTimeout(fn, durationMs);
+        timeoutHandle = setTimeout(() => fn(...args), durationMs);
     };
 };
